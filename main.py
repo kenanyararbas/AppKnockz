@@ -37,12 +37,10 @@ def get_cookies(url):
     print(cookie_dict)
 
 
-""" Crawl (Spidering) the website recursively will be used with parameter existence in terms of sqli and other code
-    injections
-"""
-
-
 def scrape(site):
+    """ Crawl (Spider) the website recursively will be used with parameter existence in terms of SQLi and other code
+        injections
+    """
     # getting the request from url
     r = requests.get(site)
 
@@ -69,3 +67,6 @@ def scrape(site):
 
 if __name__ == '__main__':
     scrape(parsed_args.url)
+    for item in urls:
+        print(get_headers(item))
+
