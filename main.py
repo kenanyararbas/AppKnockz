@@ -4,6 +4,8 @@ import sys
 import asyncio
 import pprint
 from bs4 import BeautifulSoup as bs
+from lib.crawler import crawler
+from lib.httpassist import httpassist
 
 # Arguments and argument Parsers
 parser = argparse.ArgumentParser(description="DAST Analysis tools -h for help")
@@ -36,11 +38,9 @@ def get_cookies(url):
     print(cookie_dict)
 
 
-
-
-
 if __name__ == '__main__':
-    scrape(parsed_args.url)
-    for item in urls:
-        print(get_headers(item))
+    #crawler.scrape(parsed_args.url)
+    data = "'4 OR 1=1"
+    httpassist.post_value(url="http://testphp.vulnweb.com/listproducts.php?artist=3", payloads=data, headers="")
+
 
