@@ -1,4 +1,3 @@
-from urllib.parse import urlparse
 import requests
 import argparse
 import sys
@@ -15,7 +14,7 @@ parsed_args = parser.parse_args()
 current_protocols = ["http://", "https://"]
 
 # Global Variables
-urls = []
+
 
 
 def get_all_element(url, element_type):
@@ -37,32 +36,7 @@ def get_cookies(url):
     print(cookie_dict)
 
 
-def scrape(site):
-    """ Crawl (Spider) the website recursively will be used with parameter existence in terms of SQLi and other code
-        injections
-    """
-    # getting the request from url
-    r = requests.get(site)
 
-    # converting the text
-    s = bs(r.text, "html.parser")
-
-    for i in s.find_all("a"):
-
-        href = i.attrs['href']
-
-        if href.startswith("/"):
-            site = site + href
-
-        else:
-            site = (str(urlparse(site).scheme + "://" + urlparse(site).netloc) + "/" + href)
-            print(site)
-
-            if site not in urls:
-                urls.append(site)
-                print(site)
-                # calling it self
-                scrape(site)
 
 
 if __name__ == '__main__':
