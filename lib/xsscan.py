@@ -4,7 +4,7 @@ string_terminators = []
 payloads = open("payloads.txt", 'r')
 
 
-class codeInjection:
+class xss_scanner:
 
     def __init__(self, url, exploits, injection):
         self.url = url
