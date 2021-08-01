@@ -1,36 +1,31 @@
-from urllib.parse import urlparse
 from bs4 import BeautifulSoup as bs
+import mechanize
 
-string_terminators = []
-payloads = open("payloads.txt", 'r')
+
+string_terminators = ["", "'" , ";", "';" , ]
+payloads = ['<script>alert(1)</script>']
 
 
 class xss_scanner:
 
-    def __init__(self, url, exploits):
+    def __init__(self, url, response):
         self.url = url
-        self.exploits = exploits
+        self.response = response
+
+    def update_response(self,new_response):
+        self.response = new_response
 
     def start_scan(self):
-        content = bs(self.body, "html.parser")
+        keys = {}
+        content = bs(self.response, "html.parser")
         forms = content.find_all("form", method=True)
         for form in forms:
-            try:
-                action = form["action"]
-            except KeyError:
-                action = self.url
-            if form["method"].lower() == "post":
-                pass
+            inputs = form.find_all("input")
+            for input in inputs:
+                print(input["name"])
 
 
-    def set_url(self, url):
-        pass
 
-    def parse_url(self):
-        return urlparse(self.url)
-
-    def start_test(self):
-        pass
 
 
 if __name__ == '__main__':

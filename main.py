@@ -4,7 +4,8 @@ import sys
 import asyncio
 import pprint
 from bs4 import BeautifulSoup as bs
-from lib.crawler import crawler
+from lib.crawler import *
+from lib.xsscan import *
 from lib.httpassist import httpassist
 
 # Arguments and argument Parsers
@@ -40,7 +41,11 @@ def get_cookies(url):
 
 if __name__ == '__main__':
     #crawler.scrape(parsed_args.url)
-    data = "'4 OR 1=1"
-    httpassist.post_value(url="http://testphp.vulnweb.com/listproducts.php?artist=3", payloads=data, headers="")
+    payload = "'4 OR 1=1"
+    data = httpassist.post_method(url="http://testphp.vulnweb.com/index.php", payloads=payload, headers="")
+    print(data['context'])
+    scanner = xss_scanner(response=data['context'] , url="http://testphp.vulnweb.com/index.php")
+    scanner.start_scan()
+
 
 

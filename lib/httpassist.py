@@ -10,11 +10,15 @@ class httpassist:
         hd = headers
         data = payloads
         rq = requests.post(url=url, data=data, headers=hd)
-        print(rq.text)
+        info = {"status": rq.status_code, "headers": rq.headers,
+                "context": rq.text, "encoding": rq.encoding, "cookies": rq.cookies}
+        return info
 
     @classmethod
     def get_method(self, url, payloads, headers):
         hd = headers
         data = payloads
         rq = requests.get(url=url, data=data, headers=hd)
-        print(rq.text)
+        info = {"status": rq.status_code, "headers": rq.headers,
+                "context": rq.text, "encoding": rq.encoding, "cookies": rq.cookies}
+        print(info)
