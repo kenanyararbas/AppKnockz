@@ -41,11 +41,9 @@ def get_cookies(url):
 
 if __name__ == '__main__':
     #crawler.scrape(parsed_args.url)
-    payload = "'4 OR 1=1"
+    payload = "test payload"
     data = httpassist.post_method(url="http://testphp.vulnweb.com/index.php", payloads=payload, headers="")
-    print(data['context'])
-    scanner = xss_scanner(response=data['context'] , url="http://testphp.vulnweb.com/index.php")
+    scanner = xss_scanner(response=data['context'], url="http://testphp.vulnweb.com/index.php")
     scanner.start_scan()
-
 
 

