@@ -3,7 +3,7 @@ from urllib.parse import urljoin
 import requests
 
 string_terminators = ["", "'", ";", "';", ]
-payloads = ['<script>alert(1)</script>']
+payloads = ["<script>alert(1)</script>", '<svg onload=javascript:alert(1)/>' , '<img src=XXX onerror="alert(1)"/>']
 
 
 class xss_scanner:
@@ -56,11 +56,9 @@ class xss_scanner:
             print(P)
             response = self.submit(form_list, P)
             if P in response.content.decode():
-                print(response.content.decode())
-                return True
+                print("True")
             else:
                 print("False")
-                return False
 
 
 if __name__ == '__main__':
