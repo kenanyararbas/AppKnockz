@@ -53,12 +53,12 @@ class xss_scanner:
     def main(self):
         form_list = self.forms()
         for P in payloads:
-            print(P)
+            print("Payload = {}".format(P))
             response = self.submit(form_list, P)
             if P in response.content.decode():
-                print("True")
+                print("XSS Found!")
             else:
-                print("False")
+                continue
 
 
 if __name__ == '__main__':
