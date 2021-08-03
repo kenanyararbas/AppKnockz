@@ -55,5 +55,5 @@ def is_blind(url):
 
 
 if __name__ == '__main__':
-    sqlscanner = sql("http://testphp.vulnweb.com/artists.php?artist=1")
+    sqlscanner = sql("http://testphp.vulnweb.com/listproducts.php?cat=1")
     sqlscanner.fuzz_url(sqlscanner.identify_url())
