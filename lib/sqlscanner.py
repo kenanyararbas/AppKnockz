@@ -6,7 +6,7 @@ import Blinder
 
 
 class sql:
-    payloads = ["' AND 1=2", '#', "' or sleep(5)#", str("));waitfor delay '0:0:5'--")]
+    payloads = ["' AND 1=2", '#', "' or sleep(5)#"]
     value_terminators = ["'", ";", "%00"]
 
     def __init__(self, url):
@@ -14,7 +14,6 @@ class sql:
 
     def identify_url(self):
         url_scheme = urlparse(self.url)
-        print(url_scheme)
         return url_scheme
 
     def fuzz_url(self, url_scheme):
@@ -23,7 +22,10 @@ class sql:
                 link = url_scheme.scheme + "://" + url_scheme.netloc + "/" \
                        + url_scheme.path + "?" + url_scheme.query + term
                 content = bs(requests.get(link).content, "html.parser")
-                print(is_vulnerable(content, self.url))
+                vulnerability = is_vulnerable(content, link)
+                if not vulnerability:
+                    is_blind(self.url)
+                    break
 
 
 def is_vulnerable(response, url):
@@ -39,15 +41,17 @@ def is_vulnerable(response, url):
 
     for error in errors:
         if len(response.body.find_all(text=re.compile(error))) > 0:
-            print("There is vulnerability (SQLİ)")
-            print("Error {}".format(error))
+            print("SQL Injection at {}".format(url))
+            return True
         else:
             continue
-
-    blindCheck = Blinder.blinder(url, sleep=2)
-    print("Blind SQL Injection Bulundu : {}".format(blindCheck.check_injection()) + "//// " + url)
-
     return False
+
+
+def is_blind(url):
+    blindCheck = Blinder.blinder(url, sleep=2)
+    if blindCheck.check_injection():
+        print("Blind SQL Injection at {}".format(url))
 
 
 if __name__ == '__main__':
