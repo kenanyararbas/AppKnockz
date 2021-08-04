@@ -7,13 +7,8 @@ from urllib.error import HTTPError, URLError
 
 
 class openredirect:
-
-    payloads = ["//www.google.com/%2e%2e","//example.com@google.com/%2f..",
-                "///google.com/%2f..","///example.com@google.com/%2f.."]
-
-
-
-
+    payloads = ["//www.google.com/%2e%2e", "//example.com@google.com/%2f..",
+                "///google.com/%2f..", "///example.com@google.com/%2f.."]
 
     def __init__(self, url, cookies=None, headers=None):
         self.url = url
