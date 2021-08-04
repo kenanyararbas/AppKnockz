@@ -19,7 +19,6 @@ current_protocols = ["http://", "https://"]
 # Global Variables
 
 
-
 def get_all_element(url, element_type):
     """Given a `url`, it returns an instance based on the element type from the HTML content"""
     soup = bs(requests.get(url).content, "html.parser")
