@@ -41,6 +41,7 @@ class crawler:
                     # calling it self
                     crawler.scrape(site, cookie=cookie)
 
+
 if __name__ == '__main__':
     result = crawler.scrape(site="http://testphp.vulnweb.com/userinfo.php", cookie={"login": "test/test"})
     for i in crawler.urls:
