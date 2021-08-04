@@ -10,15 +10,14 @@ unique_string = "webappxss94949494"
 
 class xss_scanner:
 
+
+    exploited_urls = []
+
     def __init__(self, url, cookies=None, headers=None):
         self.url = url
         self.cookies = cookies,
         self.headers = headers
 
-    def create_session(self):
-        if self.cookies is not None:
-            session = requests.session()
-            return session
 
     def search_reflections(self):
         tags = []
@@ -59,11 +58,11 @@ class xss_scanner:
             form_specs["method"] = method
             form_specs["inputs"] = inputs
             forms.append(form_specs)
-
         return forms
 
     def submit(self, form_specs, payload):
         data = {}
+        responses = {}
         for form in form_specs:
             target_url = urljoin(self.url, form["action"])
             inputs = form["inputs"]
@@ -85,25 +84,31 @@ class xss_scanner:
 
             if form["method"] == "post":
                 if self.cookies is not None:
-                    return requests.post(target_url, data=data, cookies=self.cookies[0])
+                    responses[target_url] = requests.post(target_url, data=data, cookies=self.cookies[0]).content.decode()
                 else:
-                    return requests.post(target_url, data=data)
+                    responses[target_url] = requests.post(target_url, data=data).content.decode()
             else:
                 if self.cookies is not None:
-                    return requests.get(target_url, params=data, cookies=self.cookies[0])
+                    responses[target_url] = requests.get(target_url, params=data, cookies=self.cookies[0]).content.decode()
                 else:
-                    return requests.get(target_url, params=data)
+                    responses[target_url] = requests.get(target_url, params=data).content.decode()
+
+        return responses
 
     def main(self):
         form_list = self.forms()
         for P in payloads:
-            response = self.submit(form_list, P)
-            if P in response.content.decode("utf-8"):
-                print("XSS Found! at {} with the payload of {}".format(self.url,P))
-            else:
-                continue
+            responses = self.submit(form_list, P)
+            for response in responses:
+                if P in responses[response]:
+                    if response not in xss_scanner.exploited_urls:
+                        xss_scanner.exploited_urls.append(response)
+                        print("XSS Found at {} with payload : {}".format(response, P))
+                else:
+                    continue
+
 
 
 if __name__ == '__main__':
-    scanner = xss_scanner(url="http://testphp.vulnweb.com/", cookies={"login": "test/test"})
+    scanner = xss_scanner(url="http://testphp.vulnweb.com/userinfo.php", cookies={"login": "test/test"})
     scanner.main()
