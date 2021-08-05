@@ -20,7 +20,7 @@ def is_redirected(status_code):
 
 class headerinjection:
 
-    headers = ["X-Forwarded-For","Origin", "X-HTTP-Host-Override", "X-Forwarded-Server", "X-Host", "Forwarded"]
+    headers = ["X-Forwarded-For", "Origin", "X-HTTP-Host-Override", "X-Forwarded-Server", "X-Host", "Forwarded"]
     internal_hosts = ["127.0.0.1", "::1", "localhost", "2130706433", "017700000001" , "127.1"]
 
     def __init__(self, url , redirect):
