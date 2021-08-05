@@ -1,6 +1,5 @@
 import validators
 import requests
-from urllib.parse import urlparse
 
 
 def is_redirected(status_code):
