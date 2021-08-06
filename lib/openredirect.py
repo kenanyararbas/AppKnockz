@@ -37,7 +37,7 @@ class openredirect:
             if "Location" in req.headers and urllib.unquote(payload).decode('utf8') in req.headers["Location"]:
                 print("May be Vulnerable : {} to this payload : {}".format(self.url, payload))
             else:
-                print("Payload tried ; {}".format(target))
+                print("Payload tried and seems not vulnerable; {}".format(target))
 
 
 if __name__ == '__main__':
