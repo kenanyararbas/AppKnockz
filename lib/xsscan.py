@@ -1,5 +1,5 @@
 from bs4 import BeautifulSoup as bs
-from urllib.parse import urljoin
+from urllib.parse import urljoin,urlparse,parse_qs
 import requests
 import re
 
@@ -12,6 +12,7 @@ class xss_scanner:
 
 
     exploited_urls = []
+    escape_chars = ["'", '">', ";"]
 
     def __init__(self, url, cookies=None, headers=None):
         self.url = url
@@ -19,7 +20,7 @@ class xss_scanner:
         self.headers = headers
 
     def forms(self):
-
+        # This function is standing for enumerating the forms existed on the given URL
         if self.cookies is not None:
             content = bs(requests.get(self.url, cookies=self.cookies[0]).content.decode(), "html.parser")
         else:
@@ -49,6 +50,7 @@ class xss_scanner:
         return forms
 
     def submit(self, form_specs, payload):
+        # This function is for submitting the form POST data
         data = {}
         target_url = urljoin(self.url, form_specs["action"])
         inputs = form_specs["inputs"]
@@ -79,7 +81,7 @@ class xss_scanner:
             else:
                 response = requests.get(target_url, params=data).content.decode()
 
-        return response,target_url
+        return response, target_url
 
     def main(self):
         forms = self.forms()
@@ -89,7 +91,40 @@ class xss_scanner:
                 if P in response[0]:
                     print("XSS Found at {} with the payload {}".format(response[1],P))
 
+    def in_attrs(self, highString):
+        # If this method returns true try the payloads combined with escape sequences.
+        uniq_value = highString
+        forms = self.forms()
+        for each_form in forms:
+            final = self.submit(each_form, uniq_value)
+            if uniq_value in final[0]:
+                html_content = final[0]
+                content_parser = bs(html_content, "html.parser")
+                reflecteds = content_parser.find_all("input")
+                reflecteds.extend(content_parser.find_all("li"))
+                reflecteds.extend(content_parser.find_all("button"))
+                reflecteds.extend(content_parser.find_all("a"))
+                for reflection in reflecteds:
+                    if reflection.get("value") is not None and reflection.get("href") is not None:
+                        if reflection.get("value") == uniq_value or uniq_value in reflection.get("href"):
+                            return True
+        return False
+
+    def contain_params(self):
+        if self.check_url():
+            parsed_url = urlparse(self.url)
+            query = parsed_url.query
+            parameters = parse_qs(query)
+            if bool(parameters) is False and parameters is not None:
+                return False
+            else:
+                return True
+
+    def reflected_xss(self):
+        if self.contain_params():
+            pass
+
 
 if __name__ == '__main__':
     scanner = xss_scanner(url="http://testphp.vulnweb.com/userinfo.php", cookies={"login": "test/test"})
-    scanner.main()
+    scanner.in_attrs("kenancan")
