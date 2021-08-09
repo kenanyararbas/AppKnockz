@@ -15,11 +15,6 @@ class crawler:
         else:
             r = requests.get(site)
 
-        """ 
-            Crawl (Spider) the website recursively will be used with parameter existence in terms of SQLi and other code
-        injections
-        """
-
         # converting the text
         s = bs(r.text, "html.parser")
 
