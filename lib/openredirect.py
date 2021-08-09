@@ -1,7 +1,11 @@
 import urllib
+from urllib.parse import urlparse, parse_qs
+
 import requests
 from urllib.request import urlopen
 from urllib.error import HTTPError, URLError
+
+import validators
 
 """ You should suppLy an url like that test.com/file.php?redirc= in order to work that correctly"""
 
@@ -19,6 +23,19 @@ class openredirect:
     def set_url(self, new_url):
         self.url = new_url
 
+    def check_url(self):
+        return validators.url(self.url)
+
+    def contain_params(self):
+        if self.check_url():
+            parsed_url = urlparse(self.url)
+            query = parsed_url.query
+            parameters = parse_qs(query)
+            if bool(parameters) is False and parameters is not None:
+                return False
+            else:
+                return True
+
     def checker(self):
         try:
             response = urlopen(self.url)
@@ -31,13 +48,14 @@ class openredirect:
             return "up"
 
     def scan_url(self, payloads):
-        for payload in payloads:
-            target = self.url + payload
-            req = requests.get(target, headers=self.headers, allow_redirects=False)
-            if "Location" in req.headers and urllib.unquote(payload).decode('utf8') in req.headers["Location"]:
-                print("May be Vulnerable : {} to this payload : {}".format(self.url, payload))
-            else:
-                print("Payload tried and seems not vulnerable; {}".format(target))
+        if self.contain_params():
+            for payload in payloads:
+                target = self.url + payload
+                req = requests.get(target, headers=self.headers, allow_redirects=False)
+                if "Location" in req.headers and urllib.unquote(payload).decode('utf8') in req.headers["Location"]:
+                    print("May be Vulnerable : {} to this payload : {}".format(self.url, payload))
+                else:
+                    print("Payload tried and seems not vulnerable; {}".format(target))
 
 
 if __name__ == '__main__':
