@@ -38,6 +38,6 @@ class crawler:
 
 
 if __name__ == '__main__':
-    result = crawler.scrape(site="http://testphp.vulnweb.com/userinfo.php", cookie={"login": "test/test"})
+    crawler.scrape(site="http://testphp.vulnweb.com/userinfo.php", cookie={"login": "test/test"})
     for i in crawler.urls:
         print(i)
