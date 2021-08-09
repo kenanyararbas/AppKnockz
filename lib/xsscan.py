@@ -1,16 +1,16 @@
 from bs4 import BeautifulSoup as bs
-from urllib.parse import urljoin,urlparse,parse_qs
+from urllib.parse import urljoin, urlparse, parse_qs
 import requests
-import re
+import validators
 
 string_terminators = ["", "'", ";", "';", ]
+
 payloads = ["<script>alert(1)</script>"]
-unique_string = "webappxss94949494"
+
+unique_string = "Approx is knocking"
 
 
 class xss_scanner:
-
-
     exploited_urls = []
     escape_chars = ["'", '">', ";"]
 
@@ -18,6 +18,9 @@ class xss_scanner:
         self.url = url
         self.cookies = cookies,
         self.headers = headers
+
+    def check_url(self):
+        return validators.url(self.url)
 
     def forms(self):
         # This function is standing for enumerating the forms existed on the given URL
@@ -89,10 +92,12 @@ class xss_scanner:
             for P in payloads:
                 response = self.submit(form, P)
                 if P in response[0]:
-                    print("XSS Found at {} with the payload {}".format(response[1],P))
+                    print("XSS Found at {} with the payload {}".format(response[1], P))
 
     def in_attrs(self, highString):
         # If this method returns true try the payloads combined with escape sequences.
+        value_Tags = ["li", "a", "button", "input"]
+        reflecteds = []
         uniq_value = highString
         forms = self.forms()
         for each_form in forms:
@@ -100,10 +105,10 @@ class xss_scanner:
             if uniq_value in final[0]:
                 html_content = final[0]
                 content_parser = bs(html_content, "html.parser")
-                reflecteds = content_parser.find_all("input")
-                reflecteds.extend(content_parser.find_all("li"))
-                reflecteds.extend(content_parser.find_all("button"))
-                reflecteds.extend(content_parser.find_all("a"))
+
+                for tag in value_Tags:
+                    reflecteds.extend(content_parser.find_all(tag))
+
                 for reflection in reflecteds:
                     if reflection.get("value") is not None and reflection.get("href") is not None:
                         if reflection.get("value") == uniq_value or uniq_value in reflection.get("href"):
@@ -127,4 +132,4 @@ class xss_scanner:
 
 if __name__ == '__main__':
     scanner = xss_scanner(url="http://testphp.vulnweb.com/userinfo.php", cookies={"login": "test/test"})
-    scanner.in_attrs("kenancan")
+    print(scanner.in_attrs("kenancan"))
