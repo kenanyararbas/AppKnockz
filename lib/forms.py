@@ -6,7 +6,7 @@ from urllib.parse import urljoin
 def forms(url, cookies=None):
     # This function is standing for enumerating the forms existed on the given URL
     if cookies is not None:
-        content = bs(requests.get(url, cookies=cookies[0]).content.decode(), "html.parser")
+        content = bs(requests.get(url, cookies=cookies).content.decode(), "html.parser")
     else:
         content = bs(requests.get(url).content, "html.parser")
 
@@ -34,8 +34,9 @@ def forms(url, cookies=None):
     return returned_forms
 
 
-def submit(url, form_specs, payload, cookies=None):
+def submit(url, form_specs, payload, cookies=None , isDecoded=False):
     cookies = cookies
+    isDecoded = isDecoded
     data = {}
     target_url = urljoin(url, form_specs["action"])
     inputs = form_specs["inputs"]
@@ -55,14 +56,27 @@ def submit(url, form_specs, payload, cookies=None):
             name = input["value"]
             data[name] = value
 
-    if form_specs["method"] == "post":
-        if cookies is not None:
-            response = requests.post(target_url, data=data, cookies=cookies[0]).content.decode()
+    if isDecoded:
+        if form_specs["method"] == "post":
+            if cookies is not None:
+                response = requests.post(target_url, data=data, cookies=cookies).content.decode()
+            else:
+                response = requests.post(target_url, data=data).content.decode()
         else:
-            response = requests.post(target_url, data=data).content.decode()
+            if cookies is not None:
+                response = requests.get(target_url, params=data, cookies=cookies).content.decode()
+            else:
+                response = requests.get(target_url, params=data).content.decode()
     else:
-        if cookies is not None:
-            response = requests.get(target_url, params=data, cookies=cookies[0]).content.decode()
+        if form_specs["method"] == "post":
+            if cookies is not None:
+                response = requests.post(target_url, data=data, cookies=cookies).content
+            else:
+                response = requests.post(target_url, data=data).content
         else:
-            response = requests.get(target_url, params=data).content.decode()
+            if cookies is not None:
+                response = requests.get(target_url, params=data, cookies=cookies).content
+            else:
+                response = requests.get(target_url, params=data).content
+
     return response, target_url

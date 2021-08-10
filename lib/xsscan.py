@@ -43,7 +43,7 @@ class xss_scanner:
                             return True
         return False
 
-    def contain_params(self):
+    def has_parameters(self):
         if self.check_url():
             print(self.url)
             parsed_url = urlparse(self.url)
@@ -55,12 +55,15 @@ class xss_scanner:
                 return True
 
     def reflected_xss(self):
-        if self.contain_params():
+        if self.has_parameters():
             parsed_url = urlparse(self.url)
             query = parsed_url.query
             parameters = parse_qs(query)
+
             for parameter in parameters:
                 parameters[parameter] = parameters[parameter][0]
+
+            for parameter in parameters:
                 current_Value = parameters[parameter]
                 for P in payloads:
                     parameters[parameter] = P
@@ -79,7 +82,7 @@ class xss_scanner:
         for form in formslist:
             for P in payloads:
                 response = submit(self.url, form, P , self.cookies)
-                if P in response[0]:
+                if P in response[0].decode():
                     print("XSS Found at {} endpoint triggered with {} payload".format(response[1], P))
 
 
