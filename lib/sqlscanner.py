@@ -6,7 +6,7 @@ import Blinder
 
 
 class sql:
-    payloads = ["' AND 1=2", '#', "' or sleep(5)#"]
+    payloads = ["'", '#', "' or sleep(5)#"]
     value_terminators = ["'", ";SELECT 1", "%00"]
 
     def __init__(self, url):
