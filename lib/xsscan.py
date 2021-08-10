@@ -1,6 +1,5 @@
 import urllib.parse
-
-from urllib.parse import urlparse, parse_qsl,parse_qs
+from urllib.parse import urlparse, parse_qs
 from forms import *
 import validators
 
@@ -22,7 +21,6 @@ class xss_scanner:
 
     def check_url(self):
         return validators.url(self.url)
-
 
     def in_attrs(self, highString):
         # If this method returns true try the payloads combined with escape sequences.
@@ -62,15 +60,16 @@ class xss_scanner:
             query = parsed_url.query
             parameters = parse_qs(query)
             for parameter in parameters:
-                value = parameters[parameter][0]
-                parameters[parameter] = value
+                parameters[parameter] = parameters[parameter][0]
                 current_Value = parameters[parameter]
                 for P in payloads:
                     parameters[parameter] = P
                     new_parts = list(parsed_url)
                     new_parts[4] = urllib.parse.urlencode(parameters)
+                    print(new_parts)
                     build_url = urllib.parse.urlunparse(new_parts)
                     data = requests.get(build_url).text
+                    print(build_url)
                     if P in data:
                         print("Reflected XSS found at {} triggered with {}".format(self.url, P))
                 parameters[parameter] = current_Value
@@ -82,8 +81,6 @@ class xss_scanner:
                 response = submit(self.url, form, P , self.cookies)
                 if P in response[0]:
                     print("XSS Found at {} endpoint triggered with {} payload".format(response[1], P))
-
-
 
 
 if __name__ == '__main__':
