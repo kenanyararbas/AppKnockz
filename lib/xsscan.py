@@ -1,13 +1,17 @@
 import urllib.parse
 from urllib.parse import urlparse, parse_qs
-from forms import *
+import requests
 import validators
+from .forms import *
+from bs4 import BeautifulSoup as bs
 
 string_terminators = ["", "'", ";", "';", ]
 
 payloads = ["<script>alert(1)</script>"]
 
 unique_string = "Approx is knocking"
+
+vulnerable_links = []
 
 
 class xss_scanner:
@@ -17,19 +21,22 @@ class xss_scanner:
     def __init__(self, url, cookies=None, headers=None):
         self.url = url
         self.cookies = cookies,
-        self.headers = headers
+        self.headers = headers,
 
     def check_url(self):
         return validators.url(self.url)
+
+    def set_url(self, new_url):
+        self.url = new_url
 
     def in_attrs(self, highString):
         # If this method returns true try the payloads combined with escape sequences.
         value_Tags = ["li", "a", "button", "input"]
         reflecteds = []
         unique_value = highString
-        formlist = forms(self.url, self.cookies)
+        formlist = forms.get_forms(self.url, self.cookies)
         for each_form in formlist:
-            final = submit(each_form, unique_value)
+            final = forms.submit(each_form, unique_value)
             if unique_value in final[0]:
                 html_content = final[0]
                 content_parser = bs(html_content, "html.parser")
@@ -69,23 +76,25 @@ class xss_scanner:
                     parameters[parameter] = P
                     new_parts = list(parsed_url)
                     new_parts[4] = urllib.parse.urlencode(parameters)
-                    print(new_parts)
                     build_url = urllib.parse.urlunparse(new_parts)
                     data = requests.get(build_url).text
-                    print(build_url)
                     if P in data:
                         print("Reflected XSS found at {} triggered with {}".format(self.url, P))
                 parameters[parameter] = current_Value
 
     def main(self):
-        formslist = forms(self.url, self.cookies)
+        formslist = forms.get_forms(url=self.url, cookies=self.cookies[0])
         for form in formslist:
             for P in payloads:
-                response = submit(self.url, form, P , self.cookies)
+                response = forms.submit(url=self.url, form_specs=form, payload=P, cookies=self.cookies[0])
                 if P in response[0].decode():
-                    print("XSS Found at {} endpoint triggered with {} payload".format(response[1], P))
+                    if response[1] not in vulnerable_links:
+                        print("XSS Found at {} endpoint triggered with {} payload".format(response[1], P))
+                        vulnerable_links.append(response[1])
 
 
 if __name__ == '__main__':
-    scanner = xss_scanner(url="http://testphp.vulnweb.com/search.php?test=query&dummy=test", cookies={"login": "test/test"})
-    scanner.reflected_xss()
+    scanner = xss_scanner(url="http://testphp.vulnweb.com/userinfo.php", cookies={"login":"test/test"})
+    scanner.main()
+
+

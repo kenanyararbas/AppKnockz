@@ -1,12 +1,8 @@
-import requests
+
 import argparse
-import sys
-import asyncio
-import pprint
-from bs4 import BeautifulSoup as bs
 from lib.crawler import *
-from lib.xsscan import *
-from lib.httpassist import httpassist
+from lib.xsscan import xss_scanner
+from lib.forms import *
 
 # Arguments and argument Parsers
 parser = argparse.ArgumentParser(description="DAST Analysis tools -h for help")
@@ -39,10 +35,12 @@ def get_cookies(url):
 
 
 if __name__ == '__main__':
-    #crawler.scrape(parsed_args.url)
-    payload = "test payload"
-    data = httpassist.post_method(url="http://testphp.vulnweb.com/index.php", payloads=payload, headers="")
-    scanner = xss_scanner(response=data['context'], url="http://testphp.vulnweb.com/index.php")
-    scanner.start_scan()
+    crawler.scrape("http://testphp.vulnweb.com/index.php")
+    scanner = xss_scanner(url=crawler.urls[0], cookies={"login": "test/test"})
+    for url in crawler.urls:
+        scanner.main()
+        scanner.set_url(url)
+
+
 
 
