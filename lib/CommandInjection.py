@@ -9,8 +9,10 @@ class CommandInjection:
     possible_Responses = []
     test_String = "Appknockz test"
 
-    def __init__(self, url):
+    def __init__(self, url , cookies=None , headers = None):
         self.url = url
+        self.cookies = cookies
+        self.headers = headers
 
     def check_url(self):
         return validators.url(self.url)
@@ -30,7 +32,6 @@ class CommandInjection:
 
 
     def Inject(self):
-        print(self.has_parameters())
         if self.has_parameters():
             parsed_url = urlparse(self.url)
             parameters = parse_qs(parsed_url.query)
@@ -48,7 +49,7 @@ class CommandInjection:
                     if data.status_code == 200:
                         if CommandInjection.test_String in data.text:
                             print("There is code Injection")
-
+                    data2 = requests.p
 
                 parameters[parameter] = current_value
 

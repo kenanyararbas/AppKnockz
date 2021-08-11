@@ -3,10 +3,11 @@ import re
 import requests
 from bs4 import BeautifulSoup as bs
 import Blinder
-from forms import *
+from .forms import *
 
 
 class sql:
+
     payloads = ["'", '#', "' FOO"]
     value_terminators = ["'", ";SELECT 1", "%00"]
     #Will used for blind ınjection later on
@@ -31,10 +32,10 @@ class sql:
                     is_blind(self.url)
 
     def fuzz_Forms(self):
-        form_list = forms(self.url, self.cookies)
+        form_list = forms.get_forms(self.url, self.cookies)
         for form in form_list:
             for P in sqlscanner.payloads:
-                response = submit(self.url, form_specs=form, cookies=self.cookies, payload=P)
+                response = forms.submit(self.url, form_specs=form, cookies=self.cookies, payload=P)
                 if is_vulnerable(response[0], self.url):
                     print("SQL Injection at {0} with {1} payload with form {2}".format(self.url, P, form))
                 else:
