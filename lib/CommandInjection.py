@@ -1,18 +1,19 @@
 import urllib.parse
 import requests
-from urllib.parse import urlparse,parse_qs
+from urllib.parse import urlparse, parse_qs
 import validators
+
+
 class CommandInjection:
-
-
     payloads = ["whoami"]
     possible_Responses = []
     test_String = "Appknockz test"
 
-    def __init__(self, url , cookies=None , headers = None):
+    def __init__(self, url, cookies=None, headers=None, timeout=0):
         self.url = url
         self.cookies = cookies
         self.headers = headers
+        self.timeout = timeout
 
     def check_url(self):
         return validators.url(self.url)
@@ -30,8 +31,7 @@ class CommandInjection:
             print("Provided URL is not valid")
             exit(0)
 
-
-    def Inject(self):
+    def inject(self):
         if self.has_parameters():
             parsed_url = urlparse(self.url)
             parameters = parse_qs(parsed_url.query)
@@ -46,14 +46,13 @@ class CommandInjection:
                     new_values[4] = urllib.parse.urlencode(parameters)
                     build_url = urllib.parse.urlunparse(new_values)
                     data = requests.get(build_url)
-                    if data.status_code == 200:
+                    if data.status_code == 200 or data.elapsed.total_seconds() >= self.timeout:
                         if CommandInjection.test_String in data.text:
                             print("There is code Injection")
 
                 parameters[parameter] = current_value
 
+
 if __name__ == '__main__':
     Injector = CommandInjection("http://testphp.vulnweb.com/search.php?test=query&dummy=test")
     Injector.Inject()
-
-

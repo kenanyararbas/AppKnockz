@@ -3,6 +3,8 @@ import argparse
 from lib.crawler import *
 from lib.xsscan import xss_scanner
 from lib.forms import *
+from lib.sqlscanner import sql
+from lib.CommandInjection import *
 
 # Arguments and argument Parsers
 parser = argparse.ArgumentParser(description="DAST Analysis tools -h for help")
@@ -37,9 +39,13 @@ def get_cookies(url):
 if __name__ == '__main__':
     crawler.scrape("http://testphp.vulnweb.com/index.php")
     scanner = xss_scanner(url=crawler.urls[0], cookies={"login": "test/test"})
-    for url in crawler.urls:
+    scan_sql = sql(url=crawler.urls[0], cookies={"login": "test/test"})
+    """for url in crawler.urls:
         scanner.main()
-        scanner.set_url(url)
+        scanner.set_url(url)"""
+    for url in crawler.urls:
+        scan_sql.main()
+        scan_sql.set_url(url)
 
 
 
