@@ -49,7 +49,6 @@ class CommandInjection:
                     if data.status_code == 200:
                         if CommandInjection.test_String in data.text:
                             print("There is code Injection")
-                    data2 = requests.p
 
                 parameters[parameter] = current_value
 
