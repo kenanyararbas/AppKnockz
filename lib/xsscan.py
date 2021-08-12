@@ -7,7 +7,7 @@ from bs4 import BeautifulSoup as bs
 
 string_terminators = ["", "'", ";", "';", ]
 
-payloads = ["<script>alert(1)</script>"]
+payloads = ["<script>alert(1)</script>", "<img src=X onerror=alert(1)/>", "<svg onload=alert('XSS')>"]
 
 unique_string = "Approx is knocking"
 
@@ -80,6 +80,7 @@ class xss_scanner:
                     data = requests.get(build_url).text
                     if P in data:
                         print("Reflected XSS found at {} triggered with {}".format(self.url, P))
+                        break
                 parameters[parameter] = current_Value
 
     def main(self):
@@ -91,6 +92,7 @@ class xss_scanner:
                     if response[1] not in vulnerable_links:
                         print("XSS Found at {} endpoint triggered with {} payload".format(response[1], P))
                         vulnerable_links.append(response[1])
+                        break
 
 
 if __name__ == '__main__':
