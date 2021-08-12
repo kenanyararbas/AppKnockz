@@ -47,8 +47,11 @@ if __name__ == '__main__':
     scanner = xss_scanner(url=crawler.urls[0], cookies={"login": "test/test"})
     scan_sql = sql(url=crawler.urls[0], cookies={"login": "test/test"})
     for url in crawler.urls:
+        scanner.main()
+        scanner.set_url(url)
+    """for url in crawler.urls:
         scan_sql.main()
-        scan_sql.set_url(url)
+        scan_sql.set_url(url)"""
 
 
 
