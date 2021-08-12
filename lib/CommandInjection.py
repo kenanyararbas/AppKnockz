@@ -5,11 +5,11 @@ import validators
 
 
 class CommandInjection:
-    payloads = ["whoami"]
+    payloads = ["whoami", "& ping -c 10 127.0.0.1 & ", "| ping -c 10 127.0.0.1", "& echo Appknockz &"]
     possible_Responses = []
-    test_String = "Appknockz test"
+    test_String = "Appknockz"
 
-    def __init__(self, url, cookies=None, headers=None, timeout=0):
+    def __init__(self, url, cookies=None, headers=None, timeout=3):
         self.url = url
         self.cookies = cookies
         self.headers = headers
@@ -38,6 +38,7 @@ class CommandInjection:
             # Data formatting
             for parameter in parameters:
                 parameters[parameter] = parameters[parameter][0]
+
             for parameter in parameters:
                 for P in CommandInjection.payloads:
                     current_value = parameters[parameter]
@@ -46,7 +47,9 @@ class CommandInjection:
                     new_values[4] = urllib.parse.urlencode(parameters)
                     build_url = urllib.parse.urlunparse(new_values)
                     data = requests.get(build_url)
-                    if data.status_code == 200 or data.elapsed.total_seconds() >= self.timeout:
+
+                    if (data.status_code == 200 and CommandInjection.test_String in data.text)\
+                            or data.elapsed.total_seconds() >= self.timeout:
                         if CommandInjection.test_String in data.text:
                             print("There is code Injection")
 
