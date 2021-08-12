@@ -35,14 +35,17 @@ def get_cookies(url):
     cookie_dict = cookies.get_dict()
     print(cookie_dict)
 
+def store_forms(crawler_urls):
+    page_forms = []
+    for url in crawler_urls:
+        page_forms.extend(forms.get_forms(url=url))
+    return page_forms
+
 
 if __name__ == '__main__':
     crawler.scrape("http://testphp.vulnweb.com/index.php")
     scanner = xss_scanner(url=crawler.urls[0], cookies={"login": "test/test"})
     scan_sql = sql(url=crawler.urls[0], cookies={"login": "test/test"})
-    """for url in crawler.urls:
-        scanner.main()
-        scanner.set_url(url)"""
     for url in crawler.urls:
         scan_sql.main()
         scan_sql.set_url(url)
