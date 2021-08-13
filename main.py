@@ -4,7 +4,9 @@ from lib.crawler import *
 from lib.xsscan import xss_scanner
 from lib.forms import *
 from lib.sqlscanner import sql
-from lib.CommandInjection import *
+#from lib.CommandInjection import *
+from lib.LFI import *
+from lib.headerinjection import *
 
 # Arguments and argument Parsers
 parser = argparse.ArgumentParser(description="DAST Analysis tools -h for help")
@@ -46,12 +48,25 @@ if __name__ == '__main__':
     crawler.scrape("http://testphp.vulnweb.com/index.php")
     scanner = xss_scanner(url=crawler.urls[0], cookies={"login": "test/test"})
     scan_sql = sql(url=crawler.urls[0], cookies={"login": "test/test"})
+    scan_lfi = LFI(url=crawler.urls[0], cookies={"login": "test/test"})
+    scan_header = headerinjection(url=crawler.urls[0], redirect="www.example.com")
+    print("Starting XSS Test")
     for url in crawler.urls:
         scanner.main()
         scanner.set_url(url)
-    """for url in crawler.urls:
+    print("Starting SQLi Test")
+    for url in crawler.urls:
         scan_sql.main()
-        scan_sql.set_url(url)"""
+        scan_sql.set_url(url)
+    print("Starting LFI Test")
+    for url in crawler.urls:
+        scan_lfi.main()
+        scan_lfi.set_url(url)
+    print("Starting Header Injection Test")
+    for url in crawler.urls:
+        scan_header.main()
+        scan_header.set_url(url)
+
 
 
 

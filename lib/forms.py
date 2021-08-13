@@ -41,9 +41,9 @@ class forms:
         return returned_forms
 
     @classmethod
-    def submit(self, url, form_specs, payload, cookies=None, isDecoded=False):
+    def submit(self, url, form_specs, payload, cookies=None, getContent=True):
         cookies = cookies
-        isDecoded = isDecoded
+        getContent = getContent
         data = {}
         target_url = urljoin(url, form_specs["action"])
         inputs = form_specs["inputs"]
@@ -63,18 +63,7 @@ class forms:
                 name = input["value"]
                 data[name] = value
 
-        if isDecoded:
-            if form_specs["method"] == "post":
-                if cookies is not None:
-                    response = requests.post(target_url, data=data, cookies=cookies).content.decode()
-                else:
-                    response = requests.post(target_url, data=data).content.decode()
-            else:
-                if cookies is not None:
-                    response = requests.get(target_url, params=data, cookies=cookies).content.decode()
-                else:
-                    response = requests.get(target_url, params=data).content.decode()
-        else:
+        if getContent:
             if form_specs["method"] == "post":
                 if cookies is not None:
                     response = requests.post(target_url, data=data, cookies=cookies).content
@@ -85,5 +74,16 @@ class forms:
                     response = requests.get(target_url, params=data, cookies=cookies).content
                 else:
                     response = requests.get(target_url, params=data).content
+        else:
+            if form_specs["method"] == "post":
+                if cookies is not None:
+                    response = requests.post(target_url, data=data, cookies=cookies)
+                else:
+                    response = requests.post(target_url, data=data)
+            else:
+                if cookies is not None:
+                    response = requests.get(target_url, params=data, cookies=cookies)
+                else:
+                    response = requests.get(target_url, params=data)
 
         return response, target_url

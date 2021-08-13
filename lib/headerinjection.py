@@ -18,7 +18,7 @@ def is_redirected(status_code):
 
 
 class headerinjection:
-
+    vuln_list = []
     headers = ["X-Forwarded-For", "Origin", "X-HTTP-Host-Override", "X-Forwarded-Server", "X-Host", "Forwarded"]
 
     def __init__(self, url , redirect):
@@ -28,8 +28,10 @@ class headerinjection:
     def check_url(self):
         return validators.url(self.url)
 
+    def set_url(self, new_url):
+        self.url = new_url
+
     def inject(self):
-        vuln_list = []
         if validators.url(self.url):
             Location = ""
             for header in headerinjection.headers:
@@ -37,13 +39,19 @@ class headerinjection:
                 response = requests.get(self.url, headers=req_header, allow_redirects=False)
                 if is_redirected(response.status_code):
                     Location = response.headers["Location"]
-                Body = response.content.decode()
-                if Location == self.redirect or Body.find(self.redirect) > -1:
-                    vuln_list.append({self.url:Location})
-                    return vuln_list
-            return False
+                    try:
+                        Body = response.content.decode()
+                        if Location == self.redirect or Body.find(self.redirect) > -1:
+                            print("Header Injection found at {} , injection this header: {} and redirecting that page : {}".format(self.url,header,Location))
+                            headerinjection.vuln_list.append({self.url: Location})
+                    except UnicodeDecodeError:
+                        pass
         else:
             print("Provided url is not valid")
+
+    def main(self):
+        self.inject()
+
 
 
 if __name__ == '__main__':

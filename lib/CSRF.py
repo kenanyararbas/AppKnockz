@@ -1,6 +1,8 @@
 import re
 import requests
 from forms import forms
+import random
+import string
 
 tokenPattern = r'^[\w\-_+=/]{14,256}$'
 commonNames = ['csrf', 'auth', 'token', 'verify', 'hash']
@@ -12,7 +14,7 @@ headers = {  # default headers
     'DNT': '1',
     'Upgrade-Insecure-Requests': '1',
 }
-
+tolerable_difference = 0
 
 class CSRF:
 
@@ -50,11 +52,11 @@ class CSRF:
                         protected = True
         return protected
 
-    def isDynamic(self, url, headers, data, cookies):
+    def isDynamic(self, url, method_header ,data = None, cookies = None):
         isDynamic = False
-        response = requests.post(url=url, headers=headers, data=data, cookies=cookies)
+        response = requests.post(url=url, headers=method_header, data=data, cookies=cookies)
         content_length = len(response.text)
-        response2 = requests.post(url=url, headers=headers, data=data, cookies=cookies)
+        response2 = requests.post(url=url, headers=method_header, data=data, cookies=cookies)
         content_length2 = len(response2.text)
         if content_length != content_length2:
             tolerable_difference = abs(content_length-content_length2)
@@ -64,8 +66,33 @@ class CSRF:
             isDynamic = True
         return isDynamic
 
+    def manipulator(self, url, mode, inputs):
+        final_inputs = {}
+        for input_ in inputs:
+            value = input_["Value"]
+            if value is not None:
+                if re.match(tokenPattern, value):
+                    if mode == "remove":
+                        new_value = ""
+                        final_inputs[input_] = new_value
+                    elif mode == "change":
+                        value_length = len(value)
+                        random_Value = ''.join(random.choices(string.ascii_uppercase + string.digits, k = value_length))
+                        final_inputs[input_] = random_Value
+
+    def scan_csrf(self):
+        if not self.isProtected(forms.get_forms(url=self.url, cookies=self.cookies)):
+            print("No CSRF token on forms ... ")
+            if self.isDynamic(self.url , method_header=headers, cookies=self.cookies):
+                print("Dynamic page detected tolerable difference between requests is calculated as {}".format(tolerable_difference))
+            else:
+                print("Webpage is not dynamic tolerable difference set as {}".format(tolerable_difference))
+        else:
+            print("CSRF token pattern detected , website probably takes action against CSRF")
+
+
 
 if __name__ == '__main__':
     formlist = forms.get_forms("https://www.netsparker.com/blog/web-security/protecting-website-using-anti-csrf-token/", cookies={"login":"test/test"})
-    CSRFCheck = CSRF(url="https://www.netsparker.com/blog/web-security/protecting-website-using-anti-csrf-token/",cookies={"login":"test/test"})
-    print(CSRFCheck.isProtected(parsed=formlist))
+    CSRFCheck = CSRF(url="http://testphp.vulnweb.com/artists.php?artist=1", cookies={"login":"test/test"})
+    CSRFCheck.scan_csrf()
