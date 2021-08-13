@@ -7,6 +7,7 @@ from lib.sqlscanner import sql
 #from lib.CommandInjection import *
 from lib.LFI import *
 from lib.headerinjection import *
+from lib.CSRF import *
 
 # Arguments and argument Parsers
 parser = argparse.ArgumentParser(description="DAST Analysis tools -h for help")
@@ -50,6 +51,7 @@ if __name__ == '__main__':
     scan_sql = sql(url=crawler.urls[0], cookies={"login": "test/test"})
     scan_lfi = LFI(url=crawler.urls[0], cookies={"login": "test/test"})
     scan_header = headerinjection(url=crawler.urls[0], redirect="www.example.com")
+    scan_csrf = CSRF(url=crawler.urls[0], cookies={"login":"test/test"})
     print("Starting XSS Test")
     for url in crawler.urls:
         scanner.main()
@@ -66,6 +68,10 @@ if __name__ == '__main__':
     for url in crawler.urls:
         scan_header.main()
         scan_header.set_url(url)
+    print("Starting CSRF Recon")
+    for url in crawler.urls:
+        scan_csrf.main()
+        scan_csrf.set_url(url)
 
 
 

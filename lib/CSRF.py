@@ -1,12 +1,12 @@
 import re
 import requests
-from forms import forms
+from .forms import forms
 import random
 import string
 
 tokenPattern = r'^[\w\-_+=/]{14,256}$'
 commonNames = ['csrf', 'auth', 'token', 'verify', 'hash']
-headers = {  # default headers
+C_headers = {  # default headers
     'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
     'Accept-Language': 'en-US,en;q=0.5',
     'Accept-Encoding': 'gzip,deflate',
@@ -18,13 +18,18 @@ tolerable_difference = 0
 
 class CSRF:
 
-    def __init__(self, url, headers=headers, cookies=None):
+    actions = []
+
+    def __init__(self, url, headers=C_headers, cookies=None):
         self.url = url
         self.headers = headers
         self.cookies = cookies
 
+    def set_url(self,new_url):
+        self.url = new_url
+
     def extractHeaders(self, req_headers):
-        req_headers = req_headers.replace('\\n', '\n')
+        headers = req_headers.replace('\\n', '\n')
         sorted_headers = {}
         matches = re.findall(r'(.*):\s(.*)', headers)
         for match in matches:
@@ -40,17 +45,18 @@ class CSRF:
 
     def isProtected(self, parsed):
         protected = False
-        print(parsed)
-        for oneForm in parsed:
-            inputs = oneForm['inputs']
-            for inp in inputs:
-                name = inp['name']
-                kind = inp['type']
-                value = inp['value']
-                if value is not None:
-                    if re.match(tokenPattern, value):
-                        protected = True
-        return protected
+        if self.url not in CSRF.actions:
+            for oneForm in parsed:
+                inputs = oneForm['inputs']
+                for inp in inputs:
+                    name = inp['name']
+                    kind = inp['type']
+                    value = inp['value']
+                    if value is not None:
+                        if re.match(tokenPattern, value):
+                            print(oneForm)
+                            protected = True
+            return protected
 
     def isDynamic(self, url, method_header ,data = None, cookies = None):
         isDynamic = False
@@ -80,19 +86,16 @@ class CSRF:
                         random_Value = ''.join(random.choices(string.ascii_uppercase + string.digits, k = value_length))
                         final_inputs[input_] = random_Value
 
-    def scan_csrf(self):
+    def main(self):
         if not self.isProtected(forms.get_forms(url=self.url, cookies=self.cookies)):
-            print("No CSRF token on forms ... ")
-            if self.isDynamic(self.url , method_header=headers, cookies=self.cookies):
-                print("Dynamic page detected tolerable difference between requests is calculated as {}".format(tolerable_difference))
-            else:
-                print("Webpage is not dynamic tolerable difference set as {}".format(tolerable_difference))
+            CSRF.actions.append(self.url)
         else:
-            print("CSRF token pattern detected , website probably takes action against CSRF")
+            print(forms.get_forms(url=self.url,cookies=self.cookies))
+            print("CSRF token pattern detected , website probably takes action against CSRF at {}".format(self.url))
 
 
 
-if __name__ == '__main__':
+"""if __name__ == '__main__':
     formlist = forms.get_forms("https://www.netsparker.com/blog/web-security/protecting-website-using-anti-csrf-token/", cookies={"login":"test/test"})
     CSRFCheck = CSRF(url="http://testphp.vulnweb.com/artists.php?artist=1", cookies={"login":"test/test"})
-    CSRFCheck.scan_csrf()
+    CSRFCheck.main()"""
