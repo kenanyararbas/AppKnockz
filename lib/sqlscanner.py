@@ -1,8 +1,6 @@
 from urllib.parse import urlparse
-import requests
-from bs4 import BeautifulSoup as bs
 import Blinder
-from .forms import *
+from forms import *
 
 
 class sql:
@@ -77,8 +75,10 @@ def is_blind(url):
     blindCheck = Blinder.blinder(url, sleep=2)
     if blindCheck.check_injection():
         print("Blind SQL Injection at {}".format(url))
+        return blindCheck.get_tables()
 
 
-"""if __name__ == '__main__':
+if __name__ == '__main__':
     sqlscanner = sql("http://testphp.vulnweb.com/userinfo.php", cookies={"login": "test/test"})
-    sqlscanner.fuzz_Forms()"""
+    print(is_blind(url="http://testphp.vulnweb.com/listproducts.php?artist=1"))
+
