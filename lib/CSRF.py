@@ -14,10 +14,11 @@ C_headers = {  # default headers
     'DNT': '1',
     'Upgrade-Insecure-Requests': '1',
 }
+
 tolerable_difference = 0
 
-class CSRF:
 
+class CSRF:
     actions = []
 
     def __init__(self, url, headers=C_headers, cookies=None):
@@ -25,7 +26,7 @@ class CSRF:
         self.headers = headers
         self.cookies = cookies
 
-    def set_url(self,new_url):
+    def set_url(self, new_url):
         self.url = new_url
 
     def extractHeaders(self, req_headers):
@@ -54,45 +55,64 @@ class CSRF:
                     value = inp['value']
                     if value is not None:
                         if re.match(tokenPattern, value):
-                            print(oneForm)
                             protected = True
             return protected
 
-    def isDynamic(self, url, method_header ,data = None, cookies = None):
+    def isDynamic(self, url, method_header, data=None, cookies=None):
         isDynamic = False
         response = requests.post(url=url, headers=method_header, data=data, cookies=cookies)
         content_length = len(response.text)
         response2 = requests.post(url=url, headers=method_header, data=data, cookies=cookies)
         content_length2 = len(response2.text)
         if content_length != content_length2:
-            tolerable_difference = abs(content_length-content_length2)
+            tolerable_difference = abs(content_length - content_length2)
         else:
             tolerable_difference = 0
         if tolerable_difference > 0:
             isDynamic = True
         return isDynamic
 
-    def manipulator(self, url, mode, inputs):
+    def manipulator(self, mode, formlist):
         final_inputs = {}
-        for input_ in inputs:
-            value = input_["Value"]
-            if value is not None:
-                if re.match(tokenPattern, value):
-                    if mode == "remove":
-                        new_value = ""
-                        final_inputs[input_] = new_value
-                    elif mode == "change":
-                        value_length = len(value)
-                        random_Value = ''.join(random.choices(string.ascii_uppercase + string.digits, k = value_length))
-                        final_inputs[input_] = random_Value
+        for form in formlist:
+
+            if form['method'].lower() == "post":
+                response1 = requests.post(self.url, data=form,cookies=self.cookies)
+            else:
+                response1 = requests.get(self.url, params=form, cookies=self.cookies)
+
+            inputs = form['inputs']
+            for each_input in inputs:
+                value = each_input['value']
+                if value is not None:
+                    if re.match(tokenPattern, value):
+                        if mode == "remove":
+                            new_value = ""
+                            inputs[each_input] = new_value
+                        elif mode == "change":
+                            value_length = len(value)
+                            random_Value = ''.join(
+                                random.choices(string.ascii_uppercase + string.digits, k=value_length))
+                            each_input['value'] = random_Value
+                            if form['method'].lower() == "post":
+                                if self.isDynamic(url=self.url , method_header=C_headers , data=form, cookies=self.cookies):
+                                    print("Web page is not dynamic (Tolerable value is {})".format(tolerable_difference))
+                            print(form)
+                            response2 = requests.post(self.url, data=form, cookies=self.cookies)
+                            print("Tolerable difference is calculated as : {}".format(tolerable_difference))
+                            if (len(response1.content) - len(response2.content)) > tolerable_difference:
+                                print("Probably a CSRF Indicator found at {}".format(self.url))
+
+
+
 
     def main(self):
         if not self.isProtected(forms.get_forms(url=self.url, cookies=self.cookies)):
             CSRF.actions.append(self.url)
         else:
-            print(forms.get_forms(url=self.url,cookies=self.cookies))
+            # print(forms.get_forms(url=self.url,cookies=self.cookies))
             print("CSRF token pattern detected , website probably takes action against CSRF at {}".format(self.url))
-
+            self.manipulator(mode="change", formlist=forms.get_forms(url=self.url, cookies=self.cookies))
 
 
 """if __name__ == '__main__':

@@ -1,6 +1,7 @@
 from urllib.parse import urlparse
 import Blinder
-from forms import *
+from .forms import *
+
 
 
 class sql:
@@ -54,7 +55,7 @@ class sql:
             sql_scanner.fuzz_Forms()
 
 
-def is_vulnerable(response, url):
+def is_vulnerable(response,url):
     errors = [
         # MySQL
         "you have an error in your sql syntax;",

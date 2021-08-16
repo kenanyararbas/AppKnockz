@@ -45,14 +45,13 @@ class xss_scanner:
                     reflecteds.extend(content_parser.find_all(tag))
 
                 for reflection in reflecteds:
-                    if reflection.get("value") is not None and reflection.get("href") is not None:
+                    if reflection.get("value") is not None or reflection.get("href") is not None:
                         if reflection.get("value") == unique_value or unique_value in reflection.get("href"):
                             return True
         return False
 
     def has_parameters(self):
         if self.check_url():
-            print(self.url)
             parsed_url = urlparse(self.url)
             query = parsed_url.query
             parameters = parse_qs(query)
@@ -93,6 +92,8 @@ class xss_scanner:
                         print("XSS Found at {} endpoint triggered with {} payload".format(response[1], P))
                         vulnerable_links.append(response[1])
                         break
+                else:
+                    self.reflected_xss()
 
 
 if __name__ == '__main__':

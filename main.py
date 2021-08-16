@@ -52,7 +52,7 @@ if __name__ == '__main__':
     scan_lfi = LFI(url=crawler.urls[0], cookies={"login": "test/test"})
     scan_header = headerinjection(url=crawler.urls[0], redirect="www.example.com")
     scan_csrf = CSRF(url=crawler.urls[0], cookies={"login":"test/test"})
-    print("Starting XSS Test")
+    """print("Starting XSS Test")
     for url in crawler.urls:
         scanner.main()
         scanner.set_url(url)
@@ -67,7 +67,7 @@ if __name__ == '__main__':
     print("Starting Header Injection Test")
     for url in crawler.urls:
         scan_header.main()
-        scan_header.set_url(url)
+        scan_header.set_url(url)"""
     print("Starting CSRF Recon")
     for url in crawler.urls:
         scan_csrf.main()

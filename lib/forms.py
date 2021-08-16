@@ -41,7 +41,7 @@ class forms:
         return returned_forms
 
     @classmethod
-    def submit(self, url, form_specs, payload, cookies=None, getContent=True):
+    def submit(self, url, form_specs, payload="Undefined", cookies=None, getContent=True):
         cookies = cookies
         getContent = getContent
         data = {}
@@ -51,7 +51,6 @@ class forms:
             if input["type"] == "text" or input["type"] == "search" \
                     or input["type"].lower() == "textarea":
                 input["value"] = payload
-
                 input_name = input["name"]
                 input_value = input["value"]
 

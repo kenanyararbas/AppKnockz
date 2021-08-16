@@ -2,7 +2,7 @@ import urllib.parse
 import requests
 from urllib.parse import urlparse, parse_qs
 import validators
-from forms import forms
+from .forms import forms
 
 
 class CommandInjection:
@@ -15,6 +15,9 @@ class CommandInjection:
         self.cookies = cookies
         self.headers = headers
         self.timeout = timeout
+
+    def set_url(self, new_url):
+        self.url = new_url
 
     def check_url(self):
         return validators.url(self.url)
