@@ -34,7 +34,7 @@ class LFI:
     def mod_query(self):
         null_byte_list = []
         scheme = urlparse(self.url)
-        common_ext = ["php", "html", "js", "jpg", "jpeg", "png", "css"]
+        common_ext = ["php", "html", "js", "jpg", "jpeg", "png", "css","asp"]
         query = scheme.query
         # get two parameters at a row
         parameters = parse_qs(query)
@@ -100,12 +100,3 @@ class LFI:
             null_list = self.mod_query()
             self.add_null_byte(null_list)
 
-
-
-
-"""if __name__ == '__main__':
-    scanner = LFI("http://testphp.vulnweb.com/showimage.php?file=showimage.php&wayback=test")
-    checker = scanner.contain_params()
-    #print(scanner.check_LFI(checker))
-    list_of_something = scanner.mod_query()
-    scanner.add_null_byte(list_of_something)"""
