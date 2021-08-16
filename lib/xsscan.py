@@ -1,6 +1,5 @@
 import urllib.parse
 from urllib.parse import urlparse, parse_qs
-import requests
 import validators
 from .forms import *
 from bs4 import BeautifulSoup as bs
