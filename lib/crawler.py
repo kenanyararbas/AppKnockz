@@ -9,7 +9,6 @@ class crawler:
     @classmethod
     def scrape(self, site, cookie=None):
         if cookie is not None:
-            print(cookie)
             session = requests.session()
             r = session.get(site, cookies=cookie)
         else:
