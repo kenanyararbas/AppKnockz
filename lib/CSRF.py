@@ -95,7 +95,7 @@ class CSRF:
                                 random.choices(string.ascii_uppercase + string.digits, k=value_length))
                             each_input['value'] = random_Value
                             if form['method'].lower() == "post":
-                                if self.isDynamic(url=self.url , method_header=C_headers , data=form, cookies=self.cookies):
+                                if self.isDynamic(url=self.url , method_header=C_headers, data=form, cookies=self.cookies):
                                     print("Web page is not dynamic (Tolerable value is {})".format(tolerable_difference))
                             print(form)
                             response2 = requests.post(self.url, data=form, cookies=self.cookies)
