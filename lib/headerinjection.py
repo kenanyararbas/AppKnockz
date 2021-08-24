@@ -50,7 +50,6 @@ class headerinjection:
                             headerinjection.vuln_list.append({self.url: Location})
                             return True
                     except UnicodeDecodeError:
-                        print("Unicode felan bişeyler döndü")
                         pass
                 else:
                     return False

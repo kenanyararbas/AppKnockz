@@ -1,8 +1,9 @@
 import re
-import requests
 from .forms import forms
 import random
 import string
+from .crawler import *
+import asyncio
 
 tokenPattern = r'^[\w\-_+=/]{14,256}$'
 commonNames = ['csrf', 'auth', 'token', 'verify', 'hash']
@@ -95,7 +96,7 @@ class CSRF:
                                 random.choices(string.ascii_uppercase + string.digits, k=value_length))
                             each_input['value'] = random_Value
                             if form['method'].lower() == "post":
-                                if self.isDynamic(url=self.url , method_header=C_headers, data=form, cookies=self.cookies):
+                                if self.isDynamic(url=self.url, method_header=C_headers, data=form, cookies=self.cookies):
                                     print("Web page is not dynamic (Tolerable value is {})".format(tolerable_difference))
                             print(form)
                             response2 = requests.post(self.url, data=form, cookies=self.cookies)
@@ -106,16 +107,19 @@ class CSRF:
 
 
 
-    def main(self):
-        if not self.isProtected(forms.get_forms(url=self.url, cookies=self.cookies)):
-            CSRF.actions.append(self.url)
-        else:
-            # print(forms.get_forms(url=self.url,cookies=self.cookies))
-            print("CSRF token pattern detected , website probably takes action against CSRF at {}".format(self.url))
-            self.manipulator(mode="change", formlist=forms.get_forms(url=self.url, cookies=self.cookies))
+    def main(self,form_list):
+        for each_form in form_list:
+            if len(each_form) > 0:
+                self.set_url(each_form[0]['url'])
+            if not self.isProtected(each_form):
+                CSRF.actions.append(self.url)
+            else:
+                print("CSRF token pattern detected , website probably takes action against CSRF at {}".format(self.url))
+                for each_request in form_list:
+                    self.manipulator(mode="change", formlist=each_request)
 
 
-"""if __name__ == '__main__':
-    formlist = forms.get_forms("https://www.netsparker.com/blog/web-security/protecting-website-using-anti-csrf-token/", cookies={"login":"test/test"})
-    CSRFCheck = CSRF(url="http://testphp.vulnweb.com/artists.php?artist=1", cookies={"login":"test/test"})
-    CSRFCheck.main()"""
+if __name__ == '__main__':
+    crawler.scrape(site="http://testphp.vulnweb.com/index.php", cookie={'login':'test/test'})
+    CSRFCheck = CSRF(url="http://testphp.vulnweb.com/artists.php?artist=1", cookies={'login':'test/test'})
+    CSRFCheck.main()

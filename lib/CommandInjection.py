@@ -1,8 +1,10 @@
 import urllib.parse
-import requests
-from urllib.parse import urlparse, parse_qs
+import aiohttp
+import asyncio
+from urllib.parse import parse_qs
 import validators
-from .forms import forms
+from .crawler import *
+import time
 
 
 class CommandInjection:
@@ -10,7 +12,7 @@ class CommandInjection:
     possible_Responses = []
     test_String = "Appknockz"
 
-    def __init__(self, url, cookies=None, headers=None, timeout=3):
+    def __init__(self, url, cookies=None, headers=None, timeout=10):
         self.url = url
         self.cookies = cookies
         self.headers = headers
@@ -19,12 +21,12 @@ class CommandInjection:
     def set_url(self, new_url):
         self.url = new_url
 
-    def check_url(self):
-        return validators.url(self.url)
+    def check_url(self,url):
+        return validators.url(url)
 
-    def has_parameters(self):
-        if self.check_url():
-            parsed_url = urlparse(self.url)
+    def has_parameters(self, url):
+        if self.check_url(url):
+            parsed_url = urlparse(url)
             query = parsed_url.query
             parameters = parse_qs(query)
             if bool(parameters) is False and parameters is not None:
@@ -35,9 +37,9 @@ class CommandInjection:
             print("Provided URL is not valid")
             exit(0)
 
-    def inject_url(self):
-        if self.has_parameters():
-            parsed_url = urlparse(self.url)
+    async def inject_url(self, async_session,url):
+        if self.has_parameters(url):
+            parsed_url = urlparse(url)
             parameters = parse_qs(parsed_url.query)
             # Data formatting
             for parameter in parameters:
@@ -50,25 +52,30 @@ class CommandInjection:
                     new_values = list(parsed_url)
                     new_values[4] = urllib.parse.urlencode(parameters)
                     build_url = urllib.parse.urlunparse(new_values)
-                    data = requests.get(build_url)
 
-                    if (data.status_code == 200 and CommandInjection.test_String in data.text) \
-                            or data.elapsed.total_seconds() >= self.timeout:
-                        if CommandInjection.test_String in data.text:
-                            print("There is code Injection")
+                    start = time.time()
+                    async with async_session.get(build_url) as resp:
+                        status_code = resp.status
+                        data = await resp.text(encoding="utf-8")
+                        end = time.time()
+                        elapsed_time = end-start
 
+                    if (status_code == 200 and CommandInjection.test_String in data) \
+                            or elapsed_time >= self.timeout:
+                        return f'There is code Injection at {url} triggered with {P} payload'
                 parameters[parameter] = current_value
 
-    def inject_forms(self):
-        formlist = forms.get_forms(self.url, cookies=self.cookies)
-        for form in formlist:
-            for P in CommandInjection.payloads:
-                resp = forms.submit(self.url, form_specs=form, payload=P, cookies=self.cookies, getContent=False)[0]
-                if resp.elapsed.total_seconds() > self.timeout:
-                    print("[ +++ ] Command Injection at this form : {0} on this enpoint : {1}".format(form, self.url))
+    async def async_inject_url(self, crawler):
+        async with aiohttp.ClientSession(cookies=self.cookies) as sess:
+            tasks = []
+            for url in crawler.urls:
+                task = asyncio.ensure_future(self.inject_url(sess,url=url))
+                tasks.append(task)
+            resp = await asyncio.gather(*tasks)
+        return resp
 
-
-if __name__ == '__main__':
-    Injector = CommandInjection("http://testphp.vulnweb.com/search.php?test=query&dummy=test",
-                                cookies={"login": "test/test"})
-    Injector.inject_forms()
+    def main(self):
+        response = asyncio.run(self.async_inject_url(crawler=crawler))
+        for each_Response in response:
+            if each_Response is not None:
+                print(each_Response)

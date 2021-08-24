@@ -1,21 +1,25 @@
 from bs4 import BeautifulSoup as bs
-import requests
 from urllib.parse import urljoin
+import aiohttp
+import asyncio
 
 
 class forms:
+
+    policy = asyncio.WindowsSelectorEventLoopPolicy()
+    asyncio.set_event_loop_policy(policy)
+
     @classmethod
-    def get_forms(self, url, cookies=None):
+    async def get_forms(self, url, async_session):
         returned_forms = []
         # This function is standing for enumerating the forms existed on the given URL
-        if cookies is not None:
-            try:
-                content = bs(requests.get(url, cookies=cookies).content.decode(), "html.parser")
-            except UnicodeDecodeError:
-                content = None
-                pass
-        else:
-            content = bs(requests.get(url).content, "html.parser")
+        try:
+            async with async_session.get(url) as resp:
+                text = await resp.read()
+                content = bs(text.decode('utf-8'), "html.parser")
+        except (aiohttp.InvalidURL, UnicodeDecodeError):
+            content = None
+            pass
 
         if content is not None:
             form_Content = content.find_all("form")
@@ -34,6 +38,7 @@ class forms:
                     input_name = input_tag.attrs.get("name")
                     inputs.append({"type": input_type, "name": input_name, "value": input_value})
 
+                form_specs["url"] = url
                 form_specs["action"] = action
                 form_specs["method"] = method
                 form_specs["inputs"] = inputs
@@ -41,12 +46,22 @@ class forms:
         return returned_forms
 
     @classmethod
-    def submit(self, url, form_specs, payload="Undefined", cookies=None, getContent=True):
-        cookies = cookies
-        getContent = getContent
+    async def async_get_forms(cls, crawler, cookies):
+        async with aiohttp.ClientSession(cookies=cookies) as s:
+            tasks = []
+            for url in crawler:
+                task = asyncio.ensure_future(forms.get_forms(url=url, async_session=s))
+                tasks.append(task)
+            response = await asyncio.gather(*tasks)
+        return response
+
+    @classmethod
+    async def submit(cls, url, form_specs, async_session, payload):
         data = {}
         target_url = urljoin(url, form_specs["action"])
         inputs = form_specs["inputs"]
+        formlist = []
+
         for input in inputs:
             if input["type"] == "text" or input["type"] == "search" \
                     or input["type"].lower() == "textarea":
@@ -62,27 +77,25 @@ class forms:
                 name = input["value"]
                 data[name] = value
 
-        if getContent:
-            if form_specs["method"] == "post":
-                if cookies is not None:
-                    response = requests.post(target_url, data=data, cookies=cookies).content
-                else:
-                    response = requests.post(target_url, data=data).content
-            else:
-                if cookies is not None:
-                    response = requests.get(target_url, params=data, cookies=cookies).content
-                else:
-                    response = requests.get(target_url, params=data).content
-        else:
-            if form_specs["method"] == "post":
-                if cookies is not None:
-                    response = requests.post(target_url, data=data, cookies=cookies)
-                else:
-                    response = requests.post(target_url, data=data)
-            else:
-                if cookies is not None:
-                    response = requests.get(target_url, params=data, cookies=cookies)
-                else:
-                    response = requests.get(target_url, params=data)
+            try:
+                async with async_session.post(data=data, url=target_url) as response:
+                    text = await response.text()
+                    formlist.append({"url": target_url, "content": text})
+            except aiohttp.ClientConnectionError:
+                pass
+        return formlist
 
-        return response, target_url
+    @classmethod
+    async def async_submit(cls, formlist, payloads, cookies=None):
+        tasks = []
+        async with aiohttp.ClientSession(cookies=cookies, trust_env=True) as S:
+            for each_page in formlist:
+                for each_form in each_page:
+                    link = each_form['url']
+                    form_specs = each_form
+                    for each_payload in payloads:
+                        task = asyncio.ensure_future(cls.submit(url=link, form_specs=form_specs, async_session=S, payload=each_payload))
+                        tasks.append(task)
+            response = await asyncio.gather(*tasks)
+        return response
+

@@ -1,12 +1,12 @@
-from urllib.parse import urlparse
+import time
 import Blinder
 from .forms import *
-
+from .crawler import *
 
 
 class sql:
     payloads = ["'", '#', "' FOO"]
-    value_terminators = ["'", ";SELECT 1", "%00"]
+    value_terminators = ["'", "%00", "; SELECT NULL"]
     # Will used for blind injection later on
     crawled_urls = []
     vulns = []
@@ -22,40 +22,60 @@ class sql:
     def set_url(self, new_url):
         self.url = new_url
 
-    def fuzz_url(self, url_scheme):
+    async def fuzz_url(self, url, async_session):
         if self.url not in sql.vulns:
-            if url_scheme.query != "":
+            if url != "":
+                url_scheme = self.identify_url()
                 for term in sql.value_terminators:
                     link = url_scheme.scheme + "://" + url_scheme.netloc \
                            + url_scheme.path + "?" + url_scheme.query + term
-                    content = bs(requests.get(link).content, "html.parser")
-                    vulnerability = is_vulnerable(content, link)
-                    if not vulnerability and self.url not in sql.vulns:
-                        is_blind(self.url)
-                    elif vulnerability and self.url not in sql.vulns:
-                        print("SQL Injection at {}".format(self.url))
-                        sql.vulns.append(self.url)
 
-    def fuzz_Forms(self):
-        if self.url not in sql.vulns:
-            form_list = forms.get_forms(self.url, self.cookies)
-            for form in form_list:
-                for P in sql.payloads:
-                    response = forms.submit(self.url, form_specs=form, cookies=self.cookies, payload=P)
-                    if is_vulnerable(response[0], self.url):
-                        sql.vulns.append(self.url)
-                        print("SQL Injection at {0} with {1} payload with form {2}".format(self.url, P, form))
+                    try:
+                        async with async_session.get(link) as resp:
+                            context = await resp.text(encoding="utf-8")
+                    except:
+                        context = None
+
+                    if context is not None:
+                        content = bs(context, "html.parser")
+                        vulnerability = is_vulnerable(content)
+                        if vulnerability and self.url not in sql.vulns:
+                            sql.vulns.append(self.url)
+                            return f'SQL injection found at {self.url}'
+                        elif not vulnerability and self.url not in sql.vulns:
+                            self.crawled_urls.append(self.url)
                     else:
-                        sql.crawled_urls.append(self.url)
+                        return f'Bad url provided {self.url}'
 
-    def main(self):
-        sql_scanner = sql(self.url, cookies=self.cookies)
-        if self.url not in sql.crawled_urls or self.url not in sql.vulns:
-            sql_scanner.fuzz_url(url_scheme=sql_scanner.identify_url())
-            sql_scanner.fuzz_Forms()
+    async def async_fuzz_url(self):
+        async with aiohttp.ClientSession(cookies=self.cookies) as s:
+            tasks = []
+            for url in crawler.urls:
+                self.set_url(new_url=url)
+                task = asyncio.ensure_future(self.fuzz_url(async_session=s, url=self.url))
+                tasks.append(task)
+                result = await asyncio.gather(*tasks)
+            return result
+
+    def fuzz_Forms(self, form_list):
+        response = asyncio.run(forms.async_submit(formlist=form_list, payloads=sql.payloads, cookies=self.cookies))
+        for each_response in response:
+            vulnerability = is_vulnerable(each_response[0]['content'], type="str")
+            if vulnerability and each_response[0]['url'] not in sql.vulns:
+                print(f'SQL vulnerability found in a form instance on {each_response[0]["url"]}')
+
+    def main(self, form_list):
+        vuln_at_link = asyncio.run(self.async_fuzz_url())
+        for each_link in vuln_at_link:
+            if each_link is not None:
+                print(each_link)
+        print("Fuzzing forms for finding further vulnerable points ....")
+        self.fuzz_Forms(form_list=form_list)
+        for each_link in self.crawled_urls:
+            is_blind(each_link)
 
 
-def is_vulnerable(response,url):
+def is_vulnerable(response, type="bs"):
     errors = [
         # MySQL
         "you have an error in your sql syntax;",
@@ -65,9 +85,12 @@ def is_vulnerable(response,url):
         # Oracle
         "quoted string not properly terminated",
     ]
-    decoded_object = response.decode().lower()
+    if type == "str":
+        decoded_object = response
+    else:
+        decoded_object = response.decode()
     for error in errors:
-        if decoded_object.find(error) > -1:
+        if decoded_object.lower().find(error.lower()) > -1:
             return True
     return False
 
@@ -76,10 +99,5 @@ def is_blind(url):
     blindCheck = Blinder.blinder(url, sleep=2)
     if blindCheck.check_injection():
         print("Blind SQL Injection at {}".format(url))
-        return blindCheck.get_tables()
 
-
-if __name__ == '__main__':
-    sqlscanner = sql("http://testphp.vulnweb.com/userinfo.php", cookies={"login": "test/test"})
-    print(is_blind(url="http://testphp.vulnweb.com/listproducts.php?artist=1"))
 
