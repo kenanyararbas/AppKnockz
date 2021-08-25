@@ -4,6 +4,7 @@ import random
 import string
 from .crawler import *
 import asyncio
+from .logger import *
 
 tokenPattern = r'^[\w\-_+=/]{14,256}$'
 commonNames = ['csrf', 'auth', 'token', 'verify', 'hash']
@@ -102,7 +103,8 @@ class CSRF:
                             response2 = requests.post(self.url, data=form, cookies=self.cookies)
                             print("Tolerable difference is calculated as : {}".format(tolerable_difference))
                             if (len(response1.content) - len(response2.content)) > tolerable_difference:
-                                print("Probably a CSRF Indicator found at {}".format(self.url))
+                                notify = f'Probably a CSRF Indicator found at {self.url}'
+                                add_notification(notify, type="critical")
 
 
 
@@ -114,12 +116,8 @@ class CSRF:
             if not self.isProtected(each_form):
                 CSRF.actions.append(self.url)
             else:
-                print("CSRF token pattern detected , website probably takes action against CSRF at {}".format(self.url))
+                notify = f'CSRF token pattern detected , website probably takes action against CSRF at {self.url}'
+                add_notification(notify, type="warning")
                 for each_request in form_list:
                     self.manipulator(mode="change", formlist=each_request)
 
-
-if __name__ == '__main__':
-    crawler.scrape(site="http://testphp.vulnweb.com/index.php", cookie={'login':'test/test'})
-    CSRFCheck = CSRF(url="http://testphp.vulnweb.com/artists.php?artist=1", cookies={'login':'test/test'})
-    CSRFCheck.main()

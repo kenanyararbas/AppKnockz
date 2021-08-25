@@ -21,7 +21,7 @@ class headerinjection:
     vuln_list = []
     headers = ["X-Forwarded-For", "Origin", "X-HTTP-Host-Override", "X-Forwarded-Server", "X-Host", "Forwarded"]
 
-    def __init__(self, url , redirect , cookies=None):
+    def __init__(self, url , redirect, cookies=None):
         self.url = url
         self.redirect = redirect
         self.cookies = cookies
@@ -34,7 +34,7 @@ class headerinjection:
 
     def inject(self):
         if validators.url(self.url):
-            Location = ""
+            Location = "127.0.0.1"
             for header in headerinjection.headers:
                 req_header = {header: self.redirect}
                 if self.cookies is not None:

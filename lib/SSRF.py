@@ -1,8 +1,7 @@
 import re
 import urllib.parse
-import aiohttp
 from .headerinjection import *
-from urllib.parse import parse_qs,urlparse,urlunparse
+from urllib.parse import parse_qs
 from .forms import *
 from .crawler import *
 

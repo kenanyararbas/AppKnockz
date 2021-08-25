@@ -5,6 +5,7 @@ from .forms import *
 import asyncio
 import aiohttp
 from .crawler import *
+from .logger import add_notification
 
 string_terminators = ["", "'", ";", "';", ]
 
@@ -94,7 +95,7 @@ class xss_scanner:
                 response = await asyncio.gather(*tasks)
             for i in response:
                 if i is not None:
-                    print(i)
+                    add_notification(notification=i, type="critical")
 
     def run_xss(self, form_list):
         asyncio.run(self.reflected_main())
@@ -104,7 +105,8 @@ class xss_scanner:
             for P in payloads:
                 if P in each_page[0]['content']:
                     if each_page[0]['url'] not in vulnerable_links:
-                        print("XSS Found with a form instance {} with {} payload".format(each_page[0]['url'],P))
+                        notify = f'XSS Found with a form instance {each_page[0]["url"]} with {P} payload'
+                        add_notification(notification=notify, type="critical")
                         vulnerable_links.append(each_page[0]['url'])
 
 

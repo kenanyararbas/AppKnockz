@@ -6,8 +6,8 @@ from lib.LFI import *
 from lib.SSRF import *
 from lib.CSRF import *
 import json
-import ast
 from lib.dirf import *
+from lib.logger import *
 
 # Arguments and argument Parsers
 parser = argparse.ArgumentParser(description="DAST Analysis tools -h for help")
@@ -40,11 +40,12 @@ def get_cookies(url):
 
 
 if __name__ == '__main__':
-    print("Crawling the target website")
+    print_banner()
+    print("AppKnockz : Crawling the target website")
     start = time.time()
     crawler.scrape(site="http://testphp.vulnweb.com/index.php", cookie={"login": "test%2Ftest"})
     end = time.time()
-    print("Crawling finished in {} seconds".format(end-start))
+    print("AppKnockz : Crawling finished in {} seconds".format(end-start))
 
     """ initialization """
     xss = xss_scanner(url=crawler.urls[0], cookies=parsed_args.cookie, crawler=crawler.urls)
@@ -53,12 +54,10 @@ if __name__ == '__main__':
     csrf = CSRF(url=crawler.urls[0], cookies=parsed_args.cookie)
     local_file = LFI(url=crawler.urls[0], cookies=parsed_args.cookie)
     SSRF_scanner = SSRF(url=crawler.urls[0], cookies=parsed_args.cookie)
-    dirfinder = dirf(crawler=crawler.urls, dirs=[".idea", ".htaccess", ".git", "CVS", "_mmServerScripts"],
-                     behaviours=[])
+    dirfinder = dirf(crawler=crawler.urls, behaviours=[])
     form_list = asyncio.run(forms.async_get_forms(crawler=crawler.urls, cookies=parsed_args.cookie))
 
     """ initizalization end """
-
     dirfinder.main(crawler=crawler)
     sqli.main(form_list=form_list)
     xss.run_xss(form_list=form_list)
