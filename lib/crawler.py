@@ -1,13 +1,14 @@
 import requests
 from bs4 import BeautifulSoup as bs
 from urllib.parse import urlparse
+from .logger import *
 
 
 class crawler:
     urls = []
 
     @classmethod
-    def scrape(self, site, cookie=None):
+    def scrape(self, site, cookie=None, mode="Normal"):
         if cookie is not None:
             session = requests.session()
             r = session.get(site, cookies=cookie)
@@ -31,7 +32,14 @@ class crawler:
                 site = (str(urlparse(site).scheme + "://" + urlparse(site).netloc) + "/" + href)
 
                 if site not in crawler.urls:
-                    crawler.urls.append(site)
+
+                    if mode == "Verbose":
+                        notification = f' Path identified ; {site}'
+                        add_notification(notification, type="informational")
+
+                    else:
+                        crawler.urls.append(site)
+
                     # calling it self
                     crawler.scrape(site, cookie=cookie)
 

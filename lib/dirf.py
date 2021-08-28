@@ -1,6 +1,6 @@
 import asyncio
 import aiohttp
-from urllib.parse import parse_qs, urlparse, urljoin
+from urllib.parse import parse_qs
 import validators
 from .crawler import *
 from .logger import add_notification
@@ -74,7 +74,9 @@ class dirf:
             try:
                 if self.check_status(each_Response['status_code'], each_Response['url']):
                     notify = f'Sensitive endpoint found at {each_Response["url"]}'
-                    add_notification(notify, type="warning")
+                    formatted_data = str(each_Response["url"]).replace("\n", "")
+                    crawler.scrape(site=formatted_data, cookie=self.cookies, mode="Verbose")
+                    add_notification(notify.replace("\n", ""), type="warning")
             except TypeError:
                 pass
 

@@ -43,7 +43,7 @@ class sql:
                         vulnerability = is_vulnerable(content)
                         if vulnerability and url not in sql.vulns:
                             sql.vulns.append(url)
-                            return f'SQL injection found at {link}'
+                            return f'SQL injection found at {link}'.replace("\n", "")
                         elif not vulnerability and url not in sql.vulns:
                             self.crawled_urls.append(url)
                     else:
@@ -64,13 +64,13 @@ class sql:
             vulnerability = is_vulnerable(each_response[0]['content'], type="str")
             if vulnerability and each_response[0]['url'] not in sql.vulns:
                 notify = f'SQL vulnerability found in a form instance on {each_response[0]["url"]}'
-                add_notification(notification=notify, type="critical")
+                add_notification(notification=notify.replace("\n", ""), type="critical")
 
     def main(self, form_list):
         vuln_at_link = asyncio.run(self.async_fuzz_url())
         for each_link in vuln_at_link:
             if each_link is not None:
-                add_notification(notification=each_link,type="critical")
+                add_notification(notification=each_link, type="critical")
 
         info = "###### Fuzzing forms for finding further vulnerable points .. #####"
         add_notification(notification=info, type="information")

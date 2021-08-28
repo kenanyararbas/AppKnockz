@@ -1,3 +1,8 @@
+import sys
+
+String = r"C:\Users\kenan\Desktop\GithubProjects\Knockz\venv\Lib\site-packages"
+sys.path.append(String)
+
 import argparse
 from lib.xsscan import xss_scanner
 from lib.sqlscanner import sql
@@ -8,6 +13,7 @@ from lib.CSRF import *
 import json
 from lib.dirf import *
 from lib.logger import *
+from lib.openredirect import *
 
 # Arguments and argument Parsers
 parser = argparse.ArgumentParser(description="DAST Analysis tools -h for help")
@@ -18,6 +24,7 @@ parsed_args = parser.parse_args()
 current_protocols = ["http://", "https://"]
 
 # Global Variables
+
 
 
 def get_all_element(url, element_type):
@@ -54,6 +61,7 @@ if __name__ == '__main__':
     csrf = CSRF(url=crawler.urls[0], cookies=parsed_args.cookie)
     local_file = LFI(url=crawler.urls[0], cookies=parsed_args.cookie)
     SSRF_scanner = SSRF(url=crawler.urls[0], cookies=parsed_args.cookie)
+    odir = openredirect(url=crawler.urls[0], cookies=parsed_args.cookie)
     dirfinder = dirf(crawler=crawler.urls, behaviours=[])
     form_list = asyncio.run(forms.async_get_forms(crawler=crawler.urls, cookies=parsed_args.cookie))
 
@@ -63,6 +71,7 @@ if __name__ == '__main__':
     xss.run_xss(form_list=form_list)
     local_file.main()
     cinj.main()
+    odir.run_oredirect(crawler=crawler)
     csrf.main(form_list=form_list)
     SSRF_scanner.main(formlist=form_list)
 

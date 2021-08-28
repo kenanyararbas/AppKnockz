@@ -119,5 +119,5 @@ class LFI:
         response_list = asyncio.run(self.LFI_main())
         for each_response in response_list:
             if each_response is not None:
-                add_notification(notification=each_response, type="critical")
+                add_notification(notification=each_response.replace("\n", ""), type="critical")
 
