@@ -79,7 +79,7 @@ class CSRF:
         for form in formlist:
 
             if form['method'].lower() == "post":
-                response1 = requests.post(self.url, data=form,cookies=self.cookies)
+                response1 = requests.post(self.url, data=form, cookies=self.cookies)
             else:
                 response1 = requests.get(self.url, params=form, cookies=self.cookies)
 
@@ -113,11 +113,15 @@ class CSRF:
         for each_form in form_list:
             if len(each_form) > 0:
                 self.set_url(each_form[0]['url'])
-            if not self.isProtected(each_form):
-                CSRF.actions.append(self.url)
-            else:
+            if self.isProtected(each_form):
                 notify = f'CSRF token pattern detected , website probably takes action against CSRF at {self.url}'
                 add_notification(notify, type="warning")
                 for each_request in form_list:
                     self.manipulator(mode="change", formlist=each_request)
+            else:
+                if self.url not in CSRF.actions:
+                    CSRF.actions.append(self.url)
+                    notify = f'No CSRF token pattern at :  {self.url}'
+                    add_notification(notify, type="critical")
+
 

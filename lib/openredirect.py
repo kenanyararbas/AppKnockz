@@ -12,6 +12,8 @@ import validators
 
 
 class openredirect:
+    ''' Change the payloads according to your needs and please use a txt file :) '''
+
     payloads = ["//www.google.com/%2e%2e", "//example.com@google.com/%2f..",
                 "///google.com/%2f..", "///example.com@google.com/%2f.."]
 
@@ -68,15 +70,16 @@ class openredirect:
                     async with session.get(build_url) as resp:
                         header = resp.headers()
                         data = await resp.text(encoding="utf-8")
-                except (aiohttp.InvalidURL, TypeError, AttributeError):
+
+                    if "Location" in header and urllib.unquote(P).decode('utf8') in header['Location']:
+                        return f'May be Vulnerable : {self.url} to this payload : {P}'
+                    print(build_url)
+
+                    parameters[parameter] = current_Value
+
+                except (aiohttp.InvalidURL, TypeError, AttributeError, aiohttp.ClientConnectionError):
                     header = "Error"
 
-                parameters[parameter] = current_Value
-
-                if "Location" in header and urllib.unquote(P).decode('utf8') in header['Location']:
-                    return f'May be Vulnerable : {self.url} to this payload : {P}'
-                else:
-                    return f'Payload tried and seems not vulnerable; {P}'
 
     async def main(self, crawler):
         async with aiohttp.ClientSession(cookies=self.cookies, headers=self.headers) as session:
@@ -91,10 +94,7 @@ class openredirect:
     def run_oredirect(self,crawler):
         result = asyncio.run(self.main(crawler))
         for i in result:
-            add_notification(i.replace("\n", ""), type="warning")
+            if i is not None:
+                add_notification(i.replace("\n", ""), type="warning")
 
 
-
-if __name__ == '__main__':
-    odir = openredirect(url="http://testphp.vulnweb.com")
-    odir.scan_url(openredirect.payloads)
