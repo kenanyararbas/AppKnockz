@@ -78,4 +78,4 @@ class CommandInjection:
         response = asyncio.run(self.async_inject_url(crawler=crawler))
         for each_Response in response:
             if each_Response is not None:
-                print(each_Response)
+                add_notification(notification=each_Response, type="critical")

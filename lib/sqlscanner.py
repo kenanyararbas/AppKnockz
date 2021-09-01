@@ -8,6 +8,8 @@ class sql:
 
     with open('payloads/sql.txt') as sql_payloads:
         value_terminators = sql_payloads.readlines()
+
+
     # Will used for blind injection later on
     crawled_urls = []
     vulns = []
@@ -59,10 +61,15 @@ class sql:
         return result
 
     def fuzz_Forms(self, form_list):
-        response = asyncio.run(forms.async_submit(formlist=form_list, payloads=sql.value_terminators, cookies=self.cookies))
+        payload_list = []
+
+        for i in sql.value_terminators:
+            payload_list.append(i.replace("\n", " "))
+
+        response = asyncio.run(forms.async_submit(formlist=form_list, payloads=payload_list, cookies=self.cookies))
         for each_response in response:
             vulnerability = is_vulnerable(each_response[0]['content'], type="str")
-            if vulnerability and each_response[0]['url'] not in sql.vulns:
+            if vulnerability:
                 notify = f'SQL vulnerability found in a form instance on {each_response[0]["url"]}'
                 add_notification(notification=notify.replace("\n", ""), type="critical")
 
@@ -102,7 +109,7 @@ def is_vulnerable(response, type="bs"):
     else:
         decoded_object = response.decode()
     for error in errors:
-        if decoded_object.lower().find(error.lower()) > -1:
+        if decoded_object.lower().find(error) > -1:
             return True
     return False
 
@@ -110,6 +117,7 @@ def is_vulnerable(response, type="bs"):
 def is_blind(url):
     blindCheck = Blinder.blinder(url, sleep=5)
     if blindCheck.check_injection():
-        print("Blind SQL Injection at {}".format(url))
+        notify = f'Blind SQL Injection at {url}'
+        add_notification(notification=notify, type="critical")
 
 

@@ -1,9 +1,7 @@
 import re
-from .forms import forms
 import random
 import string
 from .crawler import *
-import asyncio
 from .logger import *
 
 tokenPattern = r'^[\w\-_+=/]{14,256}$'
@@ -123,5 +121,3 @@ class CSRF:
                     CSRF.actions.append(self.url)
                     notify = f'No CSRF token pattern at :  {self.url}'
                     add_notification(notify, type="critical")
-
-

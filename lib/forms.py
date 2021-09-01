@@ -83,6 +83,7 @@ class forms:
                     formlist.append({"url": target_url, "content": text})
             except aiohttp.ClientConnectionError:
                 pass
+
         return formlist
 
     @classmethod
@@ -94,7 +95,8 @@ class forms:
                     link = each_form['url']
                     form_specs = each_form
                     for each_payload in payloads:
-                        task = asyncio.ensure_future(cls.submit(url=link, form_specs=form_specs, async_session=S, payload=each_payload))
+                        task = asyncio.ensure_future(cls.submit(url=link, form_specs=form_specs,
+                                                                async_session=S, payload=each_payload.replace("\n", "")))
                         tasks.append(task)
             response = await asyncio.gather(*tasks)
         return response

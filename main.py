@@ -70,10 +70,16 @@ if __name__ == '__main__':
     sqli.main(form_list=form_list)
     xss.run_xss(form_list=form_list)
     local_file.main()
+    add_notification("Trying for OS Command Injection ..", type="Informational")
     cinj.main()
+    add_notification("OS Command Injection test finished. ", type="Informational")
+    add_notification("Trying for open redirect  ", type="Informational")
     odir.run_oredirect(crawler=crawler)
+    add_notification("Open redirect test finished.  ", type="Informational")
     csrf.main(form_list=form_list)
+    add_notification("Trying to find SSRF related links", type="Informational")
     SSRF_scanner.main(formlist=form_list)
+    add_notification("All tests are evaluated", type="Informational")
 
 
 
